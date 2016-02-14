@@ -1,12 +1,15 @@
 ﻿using System;
 
-namespace mini_pl_interpreter
+namespace Interpreter
 {
     class Program
     {
         static void Main(string[] args)
         {
-            Lexer lexer = new Lexer();
+            SourceReader source = new SourceReader(new System.IO.StringReader("123 456 moi"));
+            Lexer lexer = new Lexer(source);
+            foreach (Token token in lexer.GetTokens())
+                System.Console.WriteLine(token);
         }
     }
 }
