@@ -1,13 +1,24 @@
-﻿namespace Interpreter
+﻿using System.Collections.Generic;
+
+namespace Interpreter
 {
     public class Lexer
     {
         private SourceReader Source;
-        private System.Text.StringBuilder tokenContent = new System.Text.StringBuilder();
+        private System.Text.StringBuilder TokenBuilder = new System.Text.StringBuilder();
+        private Dictionary<char, Token.Types> SingleCharTokens = new Dictionary<char, Token.Types>();
+        private Dictionary<string, Token.Types> KeywordTokens = new Dictionary<string, Token.Types>();
 
         public Lexer(SourceReader source)
         {
             Source = source;
+            SingleCharTokens.Add('(', Token.Types.LParen);
+            SingleCharTokens.Add(')', Token.Types.RParen);
+            SingleCharTokens.Add('+', Token.Types.OpPlus);
+            SingleCharTokens.Add('-', Token.Types.OpMinus);
+            KeywordTokens.Add("var", Token.Types.KwVar);
+            KeywordTokens.Add("int", Token.Types.KwInt);
+            KeywordTokens.Add("string", Token.Types.KwString);
         }
 
         public System.Collections.Generic.IEnumerable<Token> GetTokens()
@@ -22,29 +33,35 @@
 
         public Token getNextToken()
         {
-            tokenContent.Clear();
+            TokenBuilder.Clear();
             Source.ReadNext();
             if (Source.AtEOF)
                 return null;
 
             while (!Source.AtEOF && char.IsWhiteSpace(Source.CurrentChar))
                 Source.ReadNext();
-
-            if (char.IsNumber(Source.CurrentChar))
+            if (SingleCharTokens.ContainsKey(Source.CurrentChar))
             {
-                tokenContent.Append(Source.CurrentChar);
-                while (char.IsNumber(Source.ReadNext()) && !Source.AtEOF)
-                    tokenContent.Append(Source.CurrentChar);
+                return new Token(SingleCharTokens[Source.CurrentChar]);
+            }
+            else if (char.IsNumber(Source.CurrentChar))
+            {
+                TokenBuilder.Append(Source.CurrentChar);
+                while (char.IsNumber(Source.Peek()) && !Source.AtEOF)
+                    TokenBuilder.Append(Source.ReadNext());
 
-                return new Token(Token.Types.Number, tokenContent.ToString());
+                return new Token(Token.Types.Number, TokenBuilder.ToString());
             }
             else
             {
-                tokenContent.Append(Source.CurrentChar);
-                while (char.IsLetter(Source.ReadNext()) && !Source.AtEOF)
-                    tokenContent.Append(Source.CurrentChar);
+                TokenBuilder.Append(Source.CurrentChar);
+                while (char.IsLetterOrDigit(Source.Peek()) && !Source.AtEOF)
+                    TokenBuilder.Append(Source.ReadNext());
+                string stringToken = TokenBuilder.ToString();
 
-                return new Token(Token.Types.Identifier, tokenContent.ToString());
+                if (KeywordTokens.ContainsKey(stringToken))
+                    return new Token(KeywordTokens[stringToken]);
+                return new Token(Token.Types.Identifier, stringToken);
             }
         }
     }
@@ -52,7 +69,7 @@
     public class SourceReader
     {
         private System.IO.TextReader sourceStream;
-        private System.Collections.Stack charBuffer = new System.Collections.Stack();
+        private Stack<int> charBuffer = new Stack<int>();
 
         public char CurrentChar { get; private set; }
         public bool AtEOF { get; private set; }
@@ -77,17 +94,17 @@
             return CurrentChar;
         }
 
-        public int Peek()
+        public char Peek()
         {
-            int nextInStream = sourceStream.Read();
-            charBuffer.Push(nextInStream);
-            return nextInStream;
+            int nextChar = sourceStream.Read();
+            charBuffer.Push(nextChar);
+            return (char) nextChar;
         }
     }
 
     public class Token
     {
-        public enum Types { Identifier, Number };
+        public enum Types { Identifier, Number, LParen, RParen, OpPlus, OpMinus, KwVar, KwInt, KwString};
 
         Types type;
         string content;
@@ -105,7 +122,9 @@
 
         public override string ToString()
         {
-            return type.ToString() + ": " + content;
+            if (content != null)
+                return string.Format("{0}: {1}", type, content);
+            return type.ToString();
         }
     }
 }
