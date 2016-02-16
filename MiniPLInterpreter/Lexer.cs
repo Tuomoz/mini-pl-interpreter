@@ -21,7 +21,7 @@ namespace Interpreter
             KeywordTokens.Add("string", Token.Types.KwString);
         }
 
-        public System.Collections.Generic.IEnumerable<Token> GetTokens()
+        public IEnumerable<Token> GetTokens()
         {
             Token nextToken = getNextToken();
             while(nextToken != null)
@@ -34,29 +34,33 @@ namespace Interpreter
         public Token getNextToken()
         {
             TokenBuilder.Clear();
+            char? peeked;
             Source.ReadNext();
-            if (Source.AtEOF)
+            while (Source.CurrentChar.HasValue && char.IsWhiteSpace(Source.CurrentChar.Value))
+                Source.ReadNext();
+            if (!Source.CurrentChar.HasValue)
                 return null;
 
-            while (!Source.AtEOF && char.IsWhiteSpace(Source.CurrentChar))
-                Source.ReadNext();
-            if (SingleCharTokens.ContainsKey(Source.CurrentChar))
+            if (SingleCharTokens.ContainsKey(Source.CurrentChar.Value))
             {
-                return new Token(SingleCharTokens[Source.CurrentChar]);
+                return new Token(SingleCharTokens[Source.CurrentChar.Value]);
             }
-            else if (char.IsNumber(Source.CurrentChar))
+            else if (char.IsNumber(Source.CurrentChar.Value))
             {
-                TokenBuilder.Append(Source.CurrentChar);
-                while (char.IsNumber(Source.Peek()) && !Source.AtEOF)
+                TokenBuilder.Append(Source.CurrentChar.Value);
+                for (peeked = Source.Peek(); peeked.HasValue && char.IsNumber(peeked.Value); peeked = Source.Peek())
+                {
                     TokenBuilder.Append(Source.ReadNext());
-
+                }
                 return new Token(Token.Types.Number, TokenBuilder.ToString());
             }
             else
             {
-                TokenBuilder.Append(Source.CurrentChar);
-                while (char.IsLetterOrDigit(Source.Peek()) && !Source.AtEOF)
+                TokenBuilder.Append(Source.CurrentChar.Value);
+                for (peeked = Source.Peek(); peeked.HasValue && char.IsLetterOrDigit(peeked.Value); peeked = Source.Peek())
+                {
                     TokenBuilder.Append(Source.ReadNext());
+                }
                 string stringToken = TokenBuilder.ToString();
 
                 if (KeywordTokens.ContainsKey(stringToken))
@@ -68,37 +72,78 @@ namespace Interpreter
 
     public class SourceReader
     {
-        private System.IO.TextReader sourceStream;
-        private Stack<int> charBuffer = new Stack<int>();
+        private struct BufferedChar
+        {
+            public char storedChar;
+            public int storedCharColumn, storedCharLine;
 
-        public char CurrentChar { get; private set; }
-        public bool AtEOF { get; private set; }
+            public BufferedChar(char storedChar, int storedCharColumn, int storedCharLine)
+            {
+                this.storedChar = storedChar;
+                this.storedCharColumn = storedCharColumn;
+                this.storedCharLine = storedCharLine;
+            }
+        }
+
+        private System.IO.TextReader sourceStream;
+        private string CurrentReaderLine;
+        private Stack<BufferedChar> charBuffer = new Stack<BufferedChar>();
+        private int ReaderColumn = 0, ReaderLineNumber = 0;
+
+        public char? CurrentChar { get; private set; }
+        public int CurrentColumn { get; private set; } = 0;
+        public int CurrentLineNumber { get; private set; } = 0;
 
         public SourceReader(System.IO.TextReader sourceStream)
         {
             this.sourceStream = sourceStream;
-            AtEOF = false;
         }
 
-        public char ReadNext()
+        public char? ReadNext()
         {
             if (charBuffer.Count > 0)
-                CurrentChar = (char) charBuffer.Pop();
+            {
+                BufferedChar buffered = charBuffer.Pop();
+                CurrentChar = buffered.storedChar;
+                CurrentColumn = buffered.storedCharColumn;
+                CurrentLineNumber = buffered.storedCharLine;
+            }
             else
             {
-                int nextChar = sourceStream.Read();
-                if (nextChar < 0)
-                    AtEOF = true;
-                CurrentChar = (char)nextChar;
+                CurrentChar = ReadNextFromSource();
+                CurrentColumn = ReaderColumn;
+                CurrentLineNumber = ReaderLineNumber;
             }
             return CurrentChar;
         }
 
-        public char Peek()
+        public char? Peek()
         {
-            int nextChar = sourceStream.Read();
-            charBuffer.Push(nextChar);
-            return (char) nextChar;
+            char? nextChar = ReadNextFromSource();
+            if (nextChar.HasValue)
+            {
+                charBuffer.Push(new BufferedChar(nextChar.Value, ReaderColumn, ReaderLineNumber));
+            }
+            return nextChar;
+        }
+
+        private char? ReadNextFromSource()
+        {
+            if (CurrentReaderLine != null && ReaderColumn < CurrentReaderLine.Length - 1)
+            {
+                ReaderColumn++;
+            }
+            else
+            {
+                CurrentReaderLine = sourceStream.ReadLine();
+                if (CurrentReaderLine == null)
+                {
+                    return null;
+                }
+                ReaderColumn = 0;
+                ReaderLineNumber++;
+            }
+            return CurrentReaderLine[ReaderColumn];
         }
     }
 
