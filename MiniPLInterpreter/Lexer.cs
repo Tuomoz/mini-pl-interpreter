@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Interpreter
 {
@@ -90,7 +91,7 @@ namespace Interpreter
         private System.IO.TextReader sourceStream;
         private string CurrentReaderLine;
         private int ReaderColumn = 0, ReaderLineNumber = -1;
-        private Stack<BufferedChar> charBuffer = new Stack<BufferedChar>();
+        private Queue<BufferedChar> charBuffer = new Queue<BufferedChar>();
 
         public char? CurrentChar { get; private set; }
         public int CurrentColumn { get; private set; } = 0;
@@ -105,7 +106,7 @@ namespace Interpreter
         {
             if (charBuffer.Count > 0)
             {
-                BufferedChar buffered = charBuffer.Pop();
+                BufferedChar buffered = charBuffer.Dequeue();
                 CurrentChar = buffered.storedChar;
                 CurrentColumn = buffered.storedCharColumn;
                 CurrentLine = buffered.storedCharLine;
@@ -121,10 +122,29 @@ namespace Interpreter
 
         public char? Peek()
         {
-            char? nextChar = ReadNextFromSource();
-            if (nextChar.HasValue)
+            return Peek(0);
+        }
+
+        public char? Peek(int offset)
+        {
+            if (charBuffer.Count > offset)
             {
-                charBuffer.Push(new BufferedChar(nextChar.Value, ReaderColumn + 1, ReaderLineNumber + 1));
+                return charBuffer.ElementAt(offset).storedChar;
+            }
+
+            offset -= charBuffer.Count;
+            char? nextChar = null;
+            for (int i = 0; i <= offset; i++)
+            {
+                nextChar = ReadNextFromSource();
+                if (nextChar.HasValue)
+                {
+                    charBuffer.Enqueue(new BufferedChar(nextChar.Value, ReaderColumn + 1, ReaderLineNumber + 1));
+                }
+                else
+                {
+                    break;
+                }
             }
             return nextChar;
         }
