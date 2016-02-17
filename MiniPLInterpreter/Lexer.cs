@@ -33,17 +33,19 @@ namespace Interpreter
 
         public Token getNextToken()
         {
-            TokenBuilder.Clear();
-            char? peeked;
             Source.ReadNext();
             while (Source.CurrentChar.HasValue && char.IsWhiteSpace(Source.CurrentChar.Value))
                 Source.ReadNext();
             if (!Source.CurrentChar.HasValue)
                 return null;
 
+            TokenBuilder.Clear();
+            char? peeked;
+            int newTokenLine = Source.CurrentLine, newTokenColumn = Source.CurrentColumn;
+
             if (SingleCharTokens.ContainsKey(Source.CurrentChar.Value))
             {
-                return new Token(SingleCharTokens[Source.CurrentChar.Value]);
+                return new Token(SingleCharTokens[Source.CurrentChar.Value], newTokenLine, newTokenColumn);
             }
             else if (char.IsNumber(Source.CurrentChar.Value))
             {
@@ -52,7 +54,7 @@ namespace Interpreter
                 {
                     TokenBuilder.Append(Source.ReadNext());
                 }
-                return new Token(Token.Types.Number, TokenBuilder.ToString());
+                return new Token(Token.Types.Number, newTokenLine, newTokenColumn, TokenBuilder.ToString());
             }
             else
             {
@@ -64,8 +66,8 @@ namespace Interpreter
                 string stringToken = TokenBuilder.ToString();
 
                 if (KeywordTokens.ContainsKey(stringToken))
-                    return new Token(KeywordTokens[stringToken]);
-                return new Token(Token.Types.Identifier, stringToken);
+                    return new Token(KeywordTokens[stringToken], newTokenLine, newTokenColumn);
+                return new Token(Token.Types.Identifier, newTokenLine, newTokenColumn, stringToken);
             }
         }
     }
@@ -87,12 +89,12 @@ namespace Interpreter
 
         private System.IO.TextReader sourceStream;
         private string CurrentReaderLine;
+        private int ReaderColumn = 0, ReaderLineNumber = -1;
         private Stack<BufferedChar> charBuffer = new Stack<BufferedChar>();
-        private int ReaderColumn = 0, ReaderLineNumber = 0;
 
         public char? CurrentChar { get; private set; }
         public int CurrentColumn { get; private set; } = 0;
-        public int CurrentLineNumber { get; private set; } = 0;
+        public int CurrentLine { get; private set; } = 0;
 
         public SourceReader(System.IO.TextReader sourceStream)
         {
@@ -106,13 +108,13 @@ namespace Interpreter
                 BufferedChar buffered = charBuffer.Pop();
                 CurrentChar = buffered.storedChar;
                 CurrentColumn = buffered.storedCharColumn;
-                CurrentLineNumber = buffered.storedCharLine;
+                CurrentLine = buffered.storedCharLine;
             }
             else
             {
                 CurrentChar = ReadNextFromSource();
-                CurrentColumn = ReaderColumn;
-                CurrentLineNumber = ReaderLineNumber;
+                CurrentColumn = ReaderColumn + 1;
+                CurrentLine = ReaderLineNumber + 1;
             }
             return CurrentChar;
         }
@@ -122,7 +124,7 @@ namespace Interpreter
             char? nextChar = ReadNextFromSource();
             if (nextChar.HasValue)
             {
-                charBuffer.Push(new BufferedChar(nextChar.Value, ReaderColumn, ReaderLineNumber));
+                charBuffer.Push(new BufferedChar(nextChar.Value, ReaderColumn + 1, ReaderLineNumber + 1));
             }
             return nextChar;
         }
@@ -151,25 +153,31 @@ namespace Interpreter
     {
         public enum Types { Identifier, Number, LParen, RParen, OpPlus, OpMinus, KwVar, KwInt, KwString};
 
-        Types type;
-        string content;
+        public Types Type { get; }
+        public string Content { get; }
+        public int Column { get; }
+        public int Line { get; }
 
-        public Token(Types type)
+        public Token(Types type, int line, int column)
         {
-            this.type = type;
+            Type = type;
+            Column = column;
+            Line = line;
         }
 
-        public Token(Types type, string content)
+        public Token(Types type, int line, int column, string content)
         {
-            this.type = type;
-            this.content = content;
+            Type = type;
+            Column = column;
+            Line = line;
+            Content = content;
         }
 
         public override string ToString()
         {
-            if (content != null)
-                return string.Format("{0}: {1}", type, content);
-            return type.ToString();
+            if (Content != null)
+                return string.Format("{0}<{1},{2}>: {3}", Type, Line, Column, Content);
+            return string.Format("{0}<{1},{2}>", Type, Line, Column);
         }
     }
 }
