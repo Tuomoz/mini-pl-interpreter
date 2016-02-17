@@ -8,7 +8,7 @@ namespace Interpreter
         private SourceReader Source;
         private System.Text.StringBuilder TokenBuilder = new System.Text.StringBuilder();
         private Dictionary<char, Token.Types> SingleCharTokens = new Dictionary<char, Token.Types>();
-        private Dictionary<string, Token.Types> KeywordTokens = new Dictionary<string, Token.Types>();
+        private Dictionary<string, Token.Types> multicharTokens = new Dictionary<string, Token.Types>();
 
         public Lexer(SourceReader source)
         {
@@ -17,9 +17,11 @@ namespace Interpreter
             SingleCharTokens.Add(')', Token.Types.RParen);
             SingleCharTokens.Add('+', Token.Types.OpPlus);
             SingleCharTokens.Add('-', Token.Types.OpMinus);
-            KeywordTokens.Add("var", Token.Types.KwVar);
-            KeywordTokens.Add("int", Token.Types.KwInt);
-            KeywordTokens.Add("string", Token.Types.KwString);
+            multicharTokens.Add(":=", Token.Types.OpAssignment);
+            multicharTokens.Add("..", Token.Types.OpRange);
+            multicharTokens.Add("var", Token.Types.KwVar);
+            multicharTokens.Add("int", Token.Types.KwInt);
+            multicharTokens.Add("string", Token.Types.KwString);
         }
 
         public IEnumerable<Token> GetTokens()
@@ -44,7 +46,12 @@ namespace Interpreter
             char? peeked;
             int newTokenLine = Source.CurrentLine, newTokenColumn = Source.CurrentColumn;
 
-            if (SingleCharTokens.ContainsKey(Source.CurrentChar.Value))
+            Token.Types? matchingTwoCharTokenType = tryMatchTwoChars();
+            if (matchingTwoCharTokenType.HasValue)
+            {
+                return new Token(matchingTwoCharTokenType.Value, newTokenLine, newTokenColumn);
+            }
+            else if (SingleCharTokens.ContainsKey(Source.CurrentChar.Value))
             {
                 return new Token(SingleCharTokens[Source.CurrentChar.Value], newTokenLine, newTokenColumn);
             }
@@ -66,10 +73,26 @@ namespace Interpreter
                 }
                 string stringToken = TokenBuilder.ToString();
 
-                if (KeywordTokens.ContainsKey(stringToken))
-                    return new Token(KeywordTokens[stringToken], newTokenLine, newTokenColumn);
+                if (multicharTokens.ContainsKey(stringToken))
+                    return new Token(multicharTokens[stringToken], newTokenLine, newTokenColumn);
                 return new Token(Token.Types.Identifier, newTokenLine, newTokenColumn, stringToken);
             }
+        }
+
+        private Token.Types? tryMatchTwoChars()
+        {
+            char? peeked = Source.Peek();
+            if (peeked.HasValue)
+            {
+                string twoChars = Source.CurrentChar.ToString() + peeked.Value.ToString();
+                Token.Types matchingType;
+                if (multicharTokens.TryGetValue(twoChars, out matchingType))
+                {
+                    Source.ReadNext();
+                    return matchingType;
+                }
+            }
+            return null;
         }
     }
 
@@ -171,7 +194,7 @@ namespace Interpreter
 
     public class Token
     {
-        public enum Types { Identifier, Number, LParen, RParen, OpPlus, OpMinus, KwVar, KwInt, KwString};
+        public enum Types { Identifier, Number, LParen, RParen, OpPlus, OpMinus, KwVar, KwInt, KwString, OpAssignment, OpRange };
 
         public Types Type { get; }
         public string Content { get; }
