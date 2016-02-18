@@ -8,6 +8,7 @@ namespace Interpreter
         private SourceReader Source;
         private System.Text.StringBuilder TokenBuilder = new System.Text.StringBuilder();
         private Dictionary<char, Token.Types> SingleCharTokens = new Dictionary<char, Token.Types>();
+        private Dictionary<char, char> EscapeCharacters = new Dictionary<char, char>();
         private Dictionary<string, Token.Types> multicharTokens = new Dictionary<string, Token.Types>();
 
         public Lexer(SourceReader source)
@@ -22,6 +23,11 @@ namespace Interpreter
             multicharTokens.Add("var", Token.Types.KwVar);
             multicharTokens.Add("int", Token.Types.KwInt);
             multicharTokens.Add("string", Token.Types.KwString);
+            EscapeCharacters.Add('"', '"');
+            EscapeCharacters.Add('\'', '\'');
+            EscapeCharacters.Add('n', '\n');
+            EscapeCharacters.Add('t', '\t');
+            EscapeCharacters.Add('\\', '\\');
         }
 
         public IEnumerable<Token> GetTokens()
@@ -64,7 +70,7 @@ namespace Interpreter
                 }
                 return new Token(Token.Types.Number, newTokenLine, newTokenColumn, TokenBuilder.ToString());
             }
-            else
+            else if (char.IsLetter(Source.CurrentChar.Value))
             {
                 TokenBuilder.Append(Source.CurrentChar.Value);
                 for (peeked = Source.Peek(); peeked.HasValue && char.IsLetterOrDigit(peeked.Value); peeked = Source.Peek())
@@ -76,6 +82,45 @@ namespace Interpreter
                 if (multicharTokens.ContainsKey(stringToken))
                     return new Token(multicharTokens[stringToken], newTokenLine, newTokenColumn);
                 return new Token(Token.Types.Identifier, newTokenLine, newTokenColumn, stringToken);
+            }
+            else if (Source.CurrentChar.Value == '"')
+            {
+                while (Source.Peek().HasValue && Source.Peek().Value != '"')
+                {
+                    if (Source.ReadNext().Value == '\\')
+                    {
+                        Source.ReadNext();
+                        if (Source.CurrentChar.HasValue && EscapeCharacters.ContainsKey(Source.CurrentChar.Value))
+                        {
+                            TokenBuilder.Append(EscapeCharacters[Source.CurrentChar.Value]);
+                        }
+                        else
+                        {
+                            throw new LexerException(
+                                string.Format("Unrecognized escape sequence at line {0} column {1}", 
+                                Source.CurrentLine, Source.CurrentColumn));
+                        }
+                    }
+                    else
+                    {
+                        TokenBuilder.Append(Source.CurrentChar.Value);
+                    }
+                }
+                Source.ReadNext();
+                if (!Source.CurrentChar.HasValue || Source.CurrentChar.Value != '"')
+                {
+                    throw new LexerException(
+                        string.Format("EOL while scanning string literal at line {0} column {1}",
+                        Source.CurrentLine, Source.CurrentColumn));
+                }
+                string stringToken = TokenBuilder.ToString();
+                return new Token(Token.Types.String, newTokenLine, newTokenColumn, stringToken);
+            }
+            else
+            {
+                throw new LexerException(
+                    string.Format("Unknown token at line {0} column {1}",
+                    Source.CurrentLine, Source.CurrentColumn));
             }
         }
 
@@ -194,7 +239,7 @@ namespace Interpreter
 
     public class Token
     {
-        public enum Types { Identifier, Number, LParen, RParen, OpPlus, OpMinus, KwVar, KwInt, KwString, OpAssignment, OpRange };
+        public enum Types { Identifier, Number, LParen, RParen, OpPlus, OpMinus, KwVar, KwInt, KwString, OpAssignment, OpRange, String };
 
         public Types Type { get; }
         public string Content { get; }
@@ -221,6 +266,23 @@ namespace Interpreter
             if (Content != null)
                 return string.Format("{0}<{1},{2}>: {3}", Type, Line, Column, Content);
             return string.Format("{0}<{1},{2}>", Type, Line, Column);
+        }
+    }
+
+    public class LexerException : System.Exception
+    {
+        public LexerException()
+        {
+        }
+
+        public LexerException(string message)
+            : base(message)
+        {
+        }
+
+        public LexerException(string message, System.Exception inner)
+            : base(message, inner)
+        {
         }
     }
 }
