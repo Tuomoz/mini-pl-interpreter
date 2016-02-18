@@ -85,7 +85,7 @@ namespace Interpreter
             }
             else if (Source.CurrentChar.Value == '"')
             {
-                while (Source.Peek().HasValue && Source.Peek().Value != '"')
+                while (Source.Peek().HasValue && Source.Peek().Value != '"' && Source.Peek().Value != '\n')
                 {
                     if (Source.ReadNext().Value == '\\')
                     {
@@ -157,8 +157,7 @@ namespace Interpreter
         }
 
         private System.IO.TextReader sourceStream;
-        private string CurrentReaderLine;
-        private int ReaderColumn = 0, ReaderLineNumber = -1;
+        private int ReaderColumn = 0, ReaderLine = 1;
         private Queue<BufferedChar> charBuffer = new Queue<BufferedChar>();
 
         public char? CurrentChar { get; private set; }
@@ -182,8 +181,8 @@ namespace Interpreter
             else
             {
                 CurrentChar = ReadNextFromSource();
-                CurrentColumn = ReaderColumn + 1;
-                CurrentLine = ReaderLineNumber + 1;
+                CurrentColumn = ReaderColumn;
+                CurrentLine = ReaderLine;
             }
             return CurrentChar;
         }
@@ -207,7 +206,7 @@ namespace Interpreter
                 nextChar = ReadNextFromSource();
                 if (nextChar.HasValue)
                 {
-                    charBuffer.Enqueue(new BufferedChar(nextChar.Value, ReaderColumn + 1, ReaderLineNumber + 1));
+                    charBuffer.Enqueue(new BufferedChar(nextChar.Value, ReaderColumn, ReaderLine));
                 }
                 else
                 {
@@ -219,21 +218,22 @@ namespace Interpreter
 
         private char? ReadNextFromSource()
         {
-            if (CurrentReaderLine != null && ReaderColumn < CurrentReaderLine.Length - 1)
+            if (CurrentChar.HasValue && CurrentChar.Value == '\n')
+            {
+                ReaderColumn = 0;
+                ReaderLine++;
+            }
+            int nextChar = sourceStream.Read();
+            if (nextChar == '\r')
+            {
+                nextChar = sourceStream.Read();
+            }
+            if (nextChar != -1)
             {
                 ReaderColumn++;
+                return (char)nextChar;
             }
-            else
-            {
-                CurrentReaderLine = sourceStream.ReadLine();
-                if (CurrentReaderLine == null)
-                {
-                    return null;
-                }
-                ReaderColumn = 0;
-                ReaderLineNumber++;
-            }
-            return CurrentReaderLine[ReaderColumn];
+            return null;
         }
     }
 
