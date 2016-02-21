@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Interpreter
@@ -43,8 +44,9 @@ namespace Interpreter
         public Token getNextToken()
         {
             Source.ReadNext();
-            while (Source.CurrentChar.HasValue && char.IsWhiteSpace(Source.CurrentChar.Value))
-                Source.ReadNext();
+            SkipWhitespace();
+            SkipComments();
+            SkipWhitespace();
             if (!Source.CurrentChar.HasValue)
                 return null;
 
@@ -97,7 +99,7 @@ namespace Interpreter
                         else
                         {
                             throw new LexerException(
-                                string.Format("Unrecognized escape sequence at line {0} column {1}", 
+                                string.Format("Unrecognized escape sequence at line {0} column {1}",
                                 Source.CurrentLine, Source.CurrentColumn));
                         }
                     }
@@ -121,6 +123,53 @@ namespace Interpreter
                 throw new LexerException(
                     string.Format("Unknown token at line {0} column {1}",
                     Source.CurrentLine, Source.CurrentColumn));
+            }
+        }
+
+        private void SkipWhitespace()
+        {
+            while (Source.CurrentChar.HasValue && char.IsWhiteSpace(Source.CurrentChar.Value))
+                Source.ReadNext();
+        }
+
+        private void SkipComments()
+        {
+            while (Source.CurrentChar == '/' && (Source.Peek() == '/' || Source.Peek() == '*'))
+            {
+                if (Source.Peek() == '/')
+                {
+                    while (Source.CurrentChar.HasValue && Source.CurrentChar != '\n')
+                    {
+                        Source.ReadNext();
+                    }
+                }
+                else
+                {
+                    int commentDepth = 1;
+                    int commentBeginLine = Source.CurrentLine, commentBeginColumn = Source.CurrentColumn;
+                    while (Source.CurrentChar.HasValue && commentDepth > 0)
+                    {
+                        Source.ReadNext();
+                        if (Source.CurrentChar == '/' && Source.Peek() == '*')
+                        {
+                            commentDepth++;
+                            Source.ReadNext();
+                        }
+                        else if (Source.CurrentChar == '*' && Source.Peek() == '/')
+                        {
+                            commentDepth--;
+                            Source.ReadNext();
+                        }
+                    }
+                    Source.ReadNext();
+                    if (commentDepth > 0)
+                    {
+                        throw new LexerException(
+                            string.Format("EOF while scanning comment beginning at line {0} column {1}",
+                            commentBeginLine, commentBeginColumn));
+                    }
+                }
+                SkipWhitespace();
             }
         }
 
