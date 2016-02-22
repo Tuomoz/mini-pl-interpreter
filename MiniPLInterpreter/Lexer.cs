@@ -7,7 +7,7 @@ namespace Interpreter
     public class Lexer
     {
         private SourceReader Source;
-        private System.Text.StringBuilder TokenBuilder = new System.Text.StringBuilder();
+        private System.Text.StringBuilder TokenContentBuilder = new System.Text.StringBuilder();
         private Dictionary<string, Token.Types> OperatorTokens = new Dictionary<string, Token.Types>();
         private Dictionary<char, char> EscapeCharacters = new Dictionary<char, char>();
         private Dictionary<string, Token.Types> KeywordTokens = new Dictionary<string, Token.Types>();
@@ -65,51 +65,54 @@ namespace Interpreter
             if (!Source.CurrentChar.HasValue)
                 return null;
 
-            TokenBuilder.Clear();
-            char? peeked;
+            TokenContentBuilder.Clear();
             int newTokenLine = Source.CurrentLine, newTokenColumn = Source.CurrentColumn;
 
-            Token.Types? matchingTwoCharTokenType = tryMatchTwoChars();
-            if (matchingTwoCharTokenType.HasValue)
+            if (OperatorTokens.ContainsKey(Source.CurrentAndPeek))
             {
-                return new Token(matchingTwoCharTokenType.Value, newTokenLine, newTokenColumn);
+                return new Token(OperatorTokens[Source.CurrentAndPeek], newTokenLine, newTokenColumn);
             }
-            else if (OperatorTokens.ContainsKey(Source.CurrentChar.Value.ToString()))
+            else if (OperatorTokens.ContainsKey(Source.CurrentChar.ToString()))
             {
-                return new Token(OperatorTokens[Source.CurrentChar.Value.ToString()], newTokenLine, newTokenColumn);
+                return new Token(OperatorTokens[Source.CurrentChar.ToString()], newTokenLine, newTokenColumn);
             }
             else if (char.IsNumber(Source.CurrentChar.Value))
             {
-                TokenBuilder.Append(Source.CurrentChar.Value);
-                for (peeked = Source.Peek(); peeked.HasValue && char.IsNumber(peeked.Value); peeked = Source.Peek())
+                TokenContentBuilder.Append(Source.CurrentChar.Value);
+                while (Source.Peek().HasValue && char.IsNumber(Source.Peek().Value))
                 {
-                    TokenBuilder.Append(Source.ReadNext());
+                    TokenContentBuilder.Append(Source.ReadNext());
                 }
-                return new Token(Token.Types.Number, newTokenLine, newTokenColumn, TokenBuilder.ToString());
+                return new Token(Token.Types.Number, newTokenLine, newTokenColumn, TokenContentBuilder.ToString());
             }
             else if (char.IsLetter(Source.CurrentChar.Value))
             {
-                TokenBuilder.Append(Source.CurrentChar.Value);
-                for (peeked = Source.Peek(); peeked.HasValue && (char.IsLetterOrDigit(peeked.Value) || peeked.Value == '_'); peeked = Source.Peek())
+                TokenContentBuilder.Append(Source.CurrentChar.Value);
+                while (Source.Peek().HasValue && (char.IsLetterOrDigit(Source.Peek().Value) || Source.Peek() == '_'))
                 {
-                    TokenBuilder.Append(Source.ReadNext());
+                    TokenContentBuilder.Append(Source.ReadNext());
                 }
-                string stringToken = TokenBuilder.ToString();
+                string stringToken = TokenContentBuilder.ToString();
 
                 if (KeywordTokens.ContainsKey(stringToken))
-                    return new Token(KeywordTokens[stringToken], newTokenLine, newTokenColumn);
-                return new Token(Token.Types.Identifier, newTokenLine, newTokenColumn, stringToken);
-            }
-            else if (Source.CurrentChar.Value == '"')
-            {
-                while (Source.Peek().HasValue && Source.Peek().Value != '"' && Source.Peek().Value != '\n')
                 {
-                    if (Source.ReadNext().Value == '\\')
+                    return new Token(KeywordTokens[stringToken], newTokenLine, newTokenColumn);
+                }
+                else
+                {
+                    return new Token(Token.Types.Identifier, newTokenLine, newTokenColumn, stringToken);
+                }
+            }
+            else if (Source.CurrentChar == '"')
+            {
+                while (Source.Peek() != '"' && Source.Peek() != '\n')
+                {
+                    if (Source.ReadNext() == '\\')
                     {
                         Source.ReadNext();
                         if (Source.CurrentChar.HasValue && EscapeCharacters.ContainsKey(Source.CurrentChar.Value))
                         {
-                            TokenBuilder.Append(EscapeCharacters[Source.CurrentChar.Value]);
+                            TokenContentBuilder.Append(EscapeCharacters[Source.CurrentChar.Value]);
                         }
                         else
                         {
@@ -120,17 +123,17 @@ namespace Interpreter
                     }
                     else
                     {
-                        TokenBuilder.Append(Source.CurrentChar.Value);
+                        TokenContentBuilder.Append(Source.CurrentChar.Value);
                     }
                 }
                 Source.ReadNext();
-                if (!Source.CurrentChar.HasValue || Source.CurrentChar.Value != '"')
+                if (!Source.CurrentChar.HasValue || Source.CurrentChar != '"')
                 {
                     throw new LexerException(
                         string.Format("EOL while scanning string literal at line {0} column {1}",
                         Source.CurrentLine, Source.CurrentColumn));
                 }
-                string stringToken = TokenBuilder.ToString();
+                string stringToken = TokenContentBuilder.ToString();
                 return new Token(Token.Types.String, newTokenLine, newTokenColumn, stringToken);
             }
             else
@@ -149,7 +152,7 @@ namespace Interpreter
 
         private void SkipComments()
         {
-            while (Source.CurrentChar == '/' && (Source.Peek() == '/' || Source.Peek() == '*'))
+            while (Source.CurrentAndPeek == "//" || Source.CurrentAndPeek == "/*")
             {
                 if (Source.Peek() == '/')
                 {
@@ -187,22 +190,6 @@ namespace Interpreter
                 SkipWhitespace();
             }
         }
-
-        private Token.Types? tryMatchTwoChars()
-        {
-            char? peeked = Source.Peek();
-            if (peeked.HasValue)
-            {
-                string twoChars = Source.CurrentChar.ToString() + peeked.Value.ToString();
-                Token.Types matchingType;
-                if (OperatorTokens.TryGetValue(twoChars, out matchingType))
-                {
-                    Source.ReadNext();
-                    return matchingType;
-                }
-            }
-            return null;
-        }
     }
 
     public class SourceReader
@@ -228,6 +215,11 @@ namespace Interpreter
         public int CurrentColumn { get; private set; } = 0;
         public int CurrentLine { get; private set; } = 0;
 
+        public string CurrentAndPeek
+        {
+            get { return string.Concat(CurrentChar, Peek()); }
+        }
+
         public SourceReader(System.IO.TextReader sourceStream)
         {
             this.sourceStream = sourceStream;
@@ -251,12 +243,7 @@ namespace Interpreter
             return CurrentChar;
         }
 
-        public char? Peek()
-        {
-            return Peek(0);
-        }
-
-        public char? Peek(int offset)
+        public char? Peek(int offset = 0)
         {
             if (charBuffer.Count > offset)
             {
