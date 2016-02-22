@@ -8,37 +8,37 @@ namespace Interpreter
     {
         private SourceReader Source;
         private System.Text.StringBuilder TokenBuilder = new System.Text.StringBuilder();
-        private Dictionary<char, Token.Types> SingleCharTokens = new Dictionary<char, Token.Types>();
+        private Dictionary<string, Token.Types> OperatorTokens = new Dictionary<string, Token.Types>();
         private Dictionary<char, char> EscapeCharacters = new Dictionary<char, char>();
-        private Dictionary<string, Token.Types> multicharTokens = new Dictionary<string, Token.Types>();
+        private Dictionary<string, Token.Types> KeywordTokens = new Dictionary<string, Token.Types>();
 
         public Lexer(SourceReader source)
         {
             Source = source;
-            SingleCharTokens.Add('(', Token.Types.LParen);
-            SingleCharTokens.Add(')', Token.Types.RParen);
-            SingleCharTokens.Add('+', Token.Types.OpPlus);
-            SingleCharTokens.Add('-', Token.Types.OpMinus);
-            SingleCharTokens.Add('/', Token.Types.OpDivide);
-            SingleCharTokens.Add('*', Token.Types.OpMultiply);
-            SingleCharTokens.Add('<', Token.Types.OpLess);
-            SingleCharTokens.Add('=', Token.Types.OpEquals);
-            SingleCharTokens.Add('&', Token.Types.OpAnd);
-            SingleCharTokens.Add('!', Token.Types.OpNot);
-            SingleCharTokens.Add(';', Token.Types.LineTerm);
-            multicharTokens.Add(":=", Token.Types.OpAssignment);
-            multicharTokens.Add("..", Token.Types.OpRange);
-            multicharTokens.Add("var", Token.Types.KwVar);
-            multicharTokens.Add("int", Token.Types.KwInt);
-            multicharTokens.Add("string", Token.Types.KwString);
-            multicharTokens.Add("bool", Token.Types.KwBool);
-            multicharTokens.Add("for", Token.Types.KwFor);
-            multicharTokens.Add("end", Token.Types.KwEnd);
-            multicharTokens.Add("in", Token.Types.KwIn);
-            multicharTokens.Add("do", Token.Types.KwDo);
-            multicharTokens.Add("read", Token.Types.KwRead);
-            multicharTokens.Add("print", Token.Types.KwPrint);
-            multicharTokens.Add("assert", Token.Types.KwAssert);
+            OperatorTokens.Add("(", Token.Types.LParen);
+            OperatorTokens.Add(")", Token.Types.RParen);
+            OperatorTokens.Add("+", Token.Types.OpPlus);
+            OperatorTokens.Add("-", Token.Types.OpMinus);
+            OperatorTokens.Add("/", Token.Types.OpDivide);
+            OperatorTokens.Add("*", Token.Types.OpMultiply);
+            OperatorTokens.Add("<", Token.Types.OpLess);
+            OperatorTokens.Add("=", Token.Types.OpEquals);
+            OperatorTokens.Add("&", Token.Types.OpAnd);
+            OperatorTokens.Add("!", Token.Types.OpNot);
+            OperatorTokens.Add(";", Token.Types.LineTerm);
+            OperatorTokens.Add(":=", Token.Types.OpAssignment);
+            OperatorTokens.Add("..", Token.Types.OpRange);
+            KeywordTokens.Add("var", Token.Types.KwVar);
+            KeywordTokens.Add("int", Token.Types.KwInt);
+            KeywordTokens.Add("string", Token.Types.KwString);
+            KeywordTokens.Add("bool", Token.Types.KwBool);
+            KeywordTokens.Add("for", Token.Types.KwFor);
+            KeywordTokens.Add("end", Token.Types.KwEnd);
+            KeywordTokens.Add("in", Token.Types.KwIn);
+            KeywordTokens.Add("do", Token.Types.KwDo);
+            KeywordTokens.Add("read", Token.Types.KwRead);
+            KeywordTokens.Add("print", Token.Types.KwPrint);
+            KeywordTokens.Add("assert", Token.Types.KwAssert);
             EscapeCharacters.Add('"', '"');
             EscapeCharacters.Add('\'', '\'');
             EscapeCharacters.Add('n', '\n');
@@ -74,9 +74,9 @@ namespace Interpreter
             {
                 return new Token(matchingTwoCharTokenType.Value, newTokenLine, newTokenColumn);
             }
-            else if (SingleCharTokens.ContainsKey(Source.CurrentChar.Value))
+            else if (OperatorTokens.ContainsKey(Source.CurrentChar.Value.ToString()))
             {
-                return new Token(SingleCharTokens[Source.CurrentChar.Value], newTokenLine, newTokenColumn);
+                return new Token(OperatorTokens[Source.CurrentChar.Value.ToString()], newTokenLine, newTokenColumn);
             }
             else if (char.IsNumber(Source.CurrentChar.Value))
             {
@@ -96,8 +96,8 @@ namespace Interpreter
                 }
                 string stringToken = TokenBuilder.ToString();
 
-                if (multicharTokens.ContainsKey(stringToken))
-                    return new Token(multicharTokens[stringToken], newTokenLine, newTokenColumn);
+                if (KeywordTokens.ContainsKey(stringToken))
+                    return new Token(KeywordTokens[stringToken], newTokenLine, newTokenColumn);
                 return new Token(Token.Types.Identifier, newTokenLine, newTokenColumn, stringToken);
             }
             else if (Source.CurrentChar.Value == '"')
@@ -195,7 +195,7 @@ namespace Interpreter
             {
                 string twoChars = Source.CurrentChar.ToString() + peeked.Value.ToString();
                 Token.Types matchingType;
-                if (multicharTokens.TryGetValue(twoChars, out matchingType))
+                if (OperatorTokens.TryGetValue(twoChars, out matchingType))
                 {
                     Source.ReadNext();
                     return matchingType;
