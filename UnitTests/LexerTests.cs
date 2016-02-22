@@ -36,6 +36,70 @@ namespace UnitTests
         }
 
         [TestMethod]
+        public void TestForKwToken()
+        {
+            Lexer lexer = CreateStringLexer("for");
+            Token token = lexer.getNextToken();
+            Assert.AreEqual(Token.Types.KwFor, token.Type);
+        }
+
+        [TestMethod]
+        public void TestEndKwToken()
+        {
+            Lexer lexer = CreateStringLexer("end");
+            Token token = lexer.getNextToken();
+            Assert.AreEqual(Token.Types.KwEnd, token.Type);
+        }
+
+        [TestMethod]
+        public void TestInKwToken()
+        {
+            Lexer lexer = CreateStringLexer("in");
+            Token token = lexer.getNextToken();
+            Assert.AreEqual(Token.Types.KwIn, token.Type);
+        }
+
+        [TestMethod]
+        public void TestDoKwToken()
+        {
+            Lexer lexer = CreateStringLexer("do");
+            Token token = lexer.getNextToken();
+            Assert.AreEqual(Token.Types.KwDo, token.Type);
+        }
+
+        [TestMethod]
+        public void TestReadKwToken()
+        {
+            Lexer lexer = CreateStringLexer("read");
+            Token token = lexer.getNextToken();
+            Assert.AreEqual(Token.Types.KwRead, token.Type);
+        }
+
+        [TestMethod]
+        public void TestPrintKwToken()
+        {
+            Lexer lexer = CreateStringLexer("print");
+            Token token = lexer.getNextToken();
+            Assert.AreEqual(Token.Types.KwPrint, token.Type);
+        }
+
+        [TestMethod]
+        public void TestBoolKwToken()
+        {
+            Lexer lexer = CreateStringLexer("bool");
+            Token token = lexer.getNextToken();
+            Assert.AreEqual(Token.Types.KwBool, token.Type);
+        }
+
+        [TestMethod]
+        public void TestAssertKwToken()
+        {
+            Lexer lexer = CreateStringLexer("assert");
+            Token token = lexer.getNextToken();
+            Assert.AreEqual(Token.Types.KwAssert, token.Type);
+        }
+
+        [TestMethod]
         public void TestIdentifierToken()
         {
             Lexer lexer = CreateStringLexer("Some1_var");
@@ -98,6 +162,54 @@ namespace UnitTests
             Lexer lexer = CreateStringLexer("..");
             Token token = lexer.getNextToken();
             Assert.AreEqual(Token.Types.OpRange, token.Type);
+        }
+
+        [TestMethod]
+        public void TestOpMultiplyToken()
+        {
+            Lexer lexer = CreateStringLexer("*");
+            Token token = lexer.getNextToken();
+            Assert.AreEqual(Token.Types.OpMultiply, token.Type);
+        }
+
+        [TestMethod]
+        public void TestOpDivideToken()
+        {
+            Lexer lexer = CreateStringLexer("/");
+            Token token = lexer.getNextToken();
+            Assert.AreEqual(Token.Types.OpDivide, token.Type);
+        }
+
+        [TestMethod]
+        public void TestOpLessToken()
+        {
+            Lexer lexer = CreateStringLexer("<");
+            Token token = lexer.getNextToken();
+            Assert.AreEqual(Token.Types.OpLess, token.Type);
+        }
+
+        [TestMethod]
+        public void TestOpEqualsToken()
+        {
+            Lexer lexer = CreateStringLexer("=");
+            Token token = lexer.getNextToken();
+            Assert.AreEqual(Token.Types.OpEquals, token.Type);
+        }
+
+        [TestMethod]
+        public void TestOpAndToken()
+        {
+            Lexer lexer = CreateStringLexer("&");
+            Token token = lexer.getNextToken();
+            Assert.AreEqual(Token.Types.OpAnd, token.Type);
+        }
+
+        [TestMethod]
+        public void TestTerminatorToken()
+        {
+            Lexer lexer = CreateStringLexer(";");
+            Token token = lexer.getNextToken();
+            Assert.AreEqual(Token.Types.LineTerm, token.Type);
         }
 
         [TestMethod]

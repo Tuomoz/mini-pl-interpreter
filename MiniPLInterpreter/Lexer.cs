@@ -19,11 +19,26 @@ namespace Interpreter
             SingleCharTokens.Add(')', Token.Types.RParen);
             SingleCharTokens.Add('+', Token.Types.OpPlus);
             SingleCharTokens.Add('-', Token.Types.OpMinus);
+            SingleCharTokens.Add('/', Token.Types.OpDivide);
+            SingleCharTokens.Add('*', Token.Types.OpMultiply);
+            SingleCharTokens.Add('<', Token.Types.OpLess);
+            SingleCharTokens.Add('=', Token.Types.OpEquals);
+            SingleCharTokens.Add('&', Token.Types.OpAnd);
+            SingleCharTokens.Add('!', Token.Types.OpNot);
+            SingleCharTokens.Add(';', Token.Types.LineTerm);
             multicharTokens.Add(":=", Token.Types.OpAssignment);
             multicharTokens.Add("..", Token.Types.OpRange);
             multicharTokens.Add("var", Token.Types.KwVar);
             multicharTokens.Add("int", Token.Types.KwInt);
             multicharTokens.Add("string", Token.Types.KwString);
+            multicharTokens.Add("bool", Token.Types.KwBool);
+            multicharTokens.Add("for", Token.Types.KwFor);
+            multicharTokens.Add("end", Token.Types.KwEnd);
+            multicharTokens.Add("in", Token.Types.KwIn);
+            multicharTokens.Add("do", Token.Types.KwDo);
+            multicharTokens.Add("read", Token.Types.KwRead);
+            multicharTokens.Add("print", Token.Types.KwPrint);
+            multicharTokens.Add("assert", Token.Types.KwAssert);
             EscapeCharacters.Add('"', '"');
             EscapeCharacters.Add('\'', '\'');
             EscapeCharacters.Add('n', '\n');
@@ -288,7 +303,9 @@ namespace Interpreter
 
     public class Token
     {
-        public enum Types { Identifier, Number, LParen, RParen, OpPlus, OpMinus, KwVar, KwInt, KwString, OpAssignment, OpRange, String };
+        public enum Types { Identifier, Number, LParen, RParen, OpPlus, OpMinus, KwVar, KwInt,
+            KwString, OpAssignment, OpRange, String, KwFor, KwEnd, KwIn, KwDo, KwRead, KwPrint,
+            KwBool, KwAssert, OpMultiply, OpDivide, OpLess, OpEquals, OpAnd, OpNot, LineTerm };
 
         public Types Type { get; }
         public string Content { get; }
