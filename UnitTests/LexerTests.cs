@@ -105,7 +105,7 @@ namespace UnitTests
             Lexer lexer = CreateStringLexer("Some1_var");
             Token token = lexer.getNextToken();
             Assert.AreEqual(Token.Types.Identifier, token.Type);
-            Assert.AreEqual("some_var", token.Content);
+            Assert.AreEqual("Some1_var", token.Content);
         }
 
         [TestMethod]

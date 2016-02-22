@@ -90,7 +90,7 @@ namespace Interpreter
             else if (char.IsLetter(Source.CurrentChar.Value))
             {
                 TokenBuilder.Append(Source.CurrentChar.Value);
-                for (peeked = Source.Peek(); peeked.HasValue && char.IsLetterOrDigit(peeked.Value); peeked = Source.Peek())
+                for (peeked = Source.Peek(); peeked.HasValue && (char.IsLetterOrDigit(peeked.Value) || peeked.Value == '_'); peeked = Source.Peek())
                 {
                     TokenBuilder.Append(Source.ReadNext());
                 }
