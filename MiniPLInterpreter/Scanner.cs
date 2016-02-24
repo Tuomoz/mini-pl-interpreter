@@ -1,16 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Interpreter
+namespace Lexer
 {
-    public class Lexer
+    public class Scanner
     {
         private SourceReader Source;
         private Dictionary<string, Token.Types> OperatorTokens = new Dictionary<string, Token.Types>();
         private Dictionary<char, char> EscapeCharacters = new Dictionary<char, char>();
         private Dictionary<string, Token.Types> KeywordTokens = new Dictionary<string, Token.Types>();
 
-        public Lexer(SourceReader source)
+        public Scanner(SourceReader source)
         {
             Source = source;
             OperatorTokens.Add("(", Token.Types.LParen);

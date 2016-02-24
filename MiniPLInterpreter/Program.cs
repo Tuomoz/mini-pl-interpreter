@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Lexer;
 
 namespace Interpreter
 {
@@ -6,8 +9,8 @@ namespace Interpreter
     {
         static void Main(string[] args)
         {
-            SourceReader source = new SourceReader(new System.IO.StringReader("123 456 moi"));
-            Lexer lexer = new Lexer(source);
+            SourceReader source = new SourceReader(new System.IO.StringReader("var test 123"));
+            Scanner lexer = new Scanner(source);
             foreach (Token token in lexer.GetTokens())
                 System.Console.WriteLine(token);
         }
