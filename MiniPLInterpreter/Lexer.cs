@@ -98,8 +98,8 @@ namespace Interpreter
             else
             {
                 throw new LexerException(
-                    string.Format("Unknown token {0} at line {0} column {1}",
-                    Source.CurrentLine, Source.CurrentColumn));
+                    string.Format("Unknown token '{0}' at line {1} column {2}",
+                    Source.CurrentChar, Source.CurrentLine, Source.CurrentColumn));
             }
         }
 
@@ -118,8 +118,8 @@ namespace Interpreter
                     catch (KeyNotFoundException)
                     {
                         throw new LexerException(
-                            string.Format("Unrecognized escape sequence at line {0} column {1}",
-                            Source.CurrentLine, Source.CurrentColumn));
+                            string.Format("Unrecognized escape sequence '\\{0}' at line {1} column {2}",
+                            Source.CurrentChar, Source.CurrentLine, Source.CurrentColumn));
                     }
                 }
                 else
