@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace Interpreter
@@ -7,7 +6,6 @@ namespace Interpreter
     public class Lexer
     {
         private SourceReader Source;
-        private System.Text.StringBuilder TokenContentBuilder = new System.Text.StringBuilder();
         private Dictionary<string, Token.Types> OperatorTokens = new Dictionary<string, Token.Types>();
         private Dictionary<char, char> EscapeCharacters = new Dictionary<char, char>();
         private Dictionary<string, Token.Types> KeywordTokens = new Dictionary<string, Token.Types>();
@@ -48,15 +46,15 @@ namespace Interpreter
 
         public IEnumerable<Token> GetTokens()
         {
-            Token nextToken = getNextToken();
+            Token nextToken = GetNextToken();
             while(nextToken != null)
             {
                 yield return nextToken;
-                nextToken = getNextToken();
+                nextToken = GetNextToken();
             }
         }
 
-        public Token getNextToken()
+        public Token GetNextToken()
         {
             Source.ReadNext();
             SkipWhitespace();
@@ -65,7 +63,6 @@ namespace Interpreter
             if (!Source.CurrentChar.HasValue)
                 return null;
 
-            TokenContentBuilder.Clear();
             int newTokenLine = Source.CurrentLine, newTokenColumn = Source.CurrentColumn;
 
             if (OperatorTokens.ContainsKey(Source.CurrentAndPeek))
@@ -78,70 +75,66 @@ namespace Interpreter
             }
             else if (char.IsNumber(Source.CurrentChar.Value))
             {
-                TokenContentBuilder.Append(Source.CurrentChar.Value);
-                while (Source.Peek().HasValue && char.IsNumber(Source.Peek().Value))
-                {
-                    TokenContentBuilder.Append(Source.ReadNext());
-                }
-                return new Token(Token.Types.Number, newTokenLine, newTokenColumn, TokenContentBuilder.ToString());
+                string tokenContent = Source.ReadWhile(peeked => char.IsDigit(peeked));
+                return new Token(Token.Types.IntLiteral, newTokenLine, newTokenColumn, tokenContent);
             }
             else if (char.IsLetter(Source.CurrentChar.Value))
             {
-                TokenContentBuilder.Append(Source.CurrentChar.Value);
-                while (Source.Peek().HasValue && (char.IsLetterOrDigit(Source.Peek().Value) || Source.Peek() == '_'))
+                string tokenContent = Source.ReadWhile(peeked => char.IsLetterOrDigit(peeked) || peeked == '_');
+                if (KeywordTokens.ContainsKey(tokenContent))
                 {
-                    TokenContentBuilder.Append(Source.ReadNext());
-                }
-                string stringToken = TokenContentBuilder.ToString();
-
-                if (KeywordTokens.ContainsKey(stringToken))
-                {
-                    return new Token(KeywordTokens[stringToken], newTokenLine, newTokenColumn);
+                    return new Token(KeywordTokens[tokenContent], newTokenLine, newTokenColumn);
                 }
                 else
                 {
-                    return new Token(Token.Types.Identifier, newTokenLine, newTokenColumn, stringToken);
+                    return new Token(Token.Types.Identifier, newTokenLine, newTokenColumn, tokenContent);
                 }
             }
             else if (Source.CurrentChar == '"')
             {
-                while (Source.Peek() != '"' && Source.Peek() != '\n')
-                {
-                    if (Source.ReadNext() == '\\')
-                    {
-                        Source.ReadNext();
-                        if (Source.CurrentChar.HasValue && EscapeCharacters.ContainsKey(Source.CurrentChar.Value))
-                        {
-                            TokenContentBuilder.Append(EscapeCharacters[Source.CurrentChar.Value]);
-                        }
-                        else
-                        {
-                            throw new LexerException(
-                                string.Format("Unrecognized escape sequence at line {0} column {1}",
-                                Source.CurrentLine, Source.CurrentColumn));
-                        }
-                    }
-                    else
-                    {
-                        TokenContentBuilder.Append(Source.CurrentChar.Value);
-                    }
-                }
-                Source.ReadNext();
-                if (!Source.CurrentChar.HasValue || Source.CurrentChar != '"')
-                {
-                    throw new LexerException(
-                        string.Format("EOL while scanning string literal at line {0} column {1}",
-                        Source.CurrentLine, Source.CurrentColumn));
-                }
-                string stringToken = TokenContentBuilder.ToString();
-                return new Token(Token.Types.String, newTokenLine, newTokenColumn, stringToken);
+                string stringToken = BuildStringLiteral();
+                return new Token(Token.Types.StringLiteral, newTokenLine, newTokenColumn, stringToken);
             }
             else
             {
                 throw new LexerException(
-                    string.Format("Unknown token at line {0} column {1}",
+                    string.Format("Unknown token {0} at line {0} column {1}",
                     Source.CurrentLine, Source.CurrentColumn));
             }
+        }
+
+        private string BuildStringLiteral()
+        {
+            System.Text.StringBuilder TokenContentBuilder = new System.Text.StringBuilder();
+            while (Source.Peek() != '"' && Source.Peek() != '\n')
+            {
+                if (Source.ReadNext() == '\\')
+                {
+                    Source.ReadNext();
+                    try
+                    {
+                        TokenContentBuilder.Append(EscapeCharacters[Source.CurrentChar.Value]);
+                    }
+                    catch (KeyNotFoundException)
+                    {
+                        throw new LexerException(
+                            string.Format("Unrecognized escape sequence at line {0} column {1}",
+                            Source.CurrentLine, Source.CurrentColumn));
+                    }
+                }
+                else
+                {
+                    TokenContentBuilder.Append(Source.CurrentChar.Value);
+                }
+            }
+            Source.ReadNext();
+            if (Source.CurrentChar != '"')
+            {
+                throw new LexerException(
+                    string.Format("EOL while scanning string literal at line {0} column {1}",
+                    Source.CurrentLine, Source.CurrentColumn));
+            }
+            return TokenContentBuilder.ToString();
         }
 
         private void SkipWhitespace()
@@ -156,7 +149,7 @@ namespace Interpreter
             {
                 if (Source.Peek() == '/')
                 {
-                    while (Source.CurrentChar.HasValue && Source.CurrentChar != '\n')
+                    while (Source.CurrentChar != '\n')
                     {
                         Source.ReadNext();
                     }
@@ -196,20 +189,20 @@ namespace Interpreter
     {
         private struct BufferedChar
         {
-            public char storedChar;
-            public int storedCharColumn, storedCharLine;
+            public char StoredChar;
+            public int StoredCharColumn, StoredCharLine;
 
             public BufferedChar(char storedChar, int storedCharColumn, int storedCharLine)
             {
-                this.storedChar = storedChar;
-                this.storedCharColumn = storedCharColumn;
-                this.storedCharLine = storedCharLine;
+                StoredChar = storedChar;
+                StoredCharColumn = storedCharColumn;
+                StoredCharLine = storedCharLine;
             }
         }
 
-        private System.IO.TextReader sourceStream;
+        private System.IO.TextReader SourceStream;
         private int ReaderColumn = 0, ReaderLine = 1;
-        private Queue<BufferedChar> charBuffer = new Queue<BufferedChar>();
+        private Queue<BufferedChar> CharBuffer = new Queue<BufferedChar>();
 
         public char? CurrentChar { get; private set; }
         public int CurrentColumn { get; private set; } = 0;
@@ -222,17 +215,17 @@ namespace Interpreter
 
         public SourceReader(System.IO.TextReader sourceStream)
         {
-            this.sourceStream = sourceStream;
+            SourceStream = sourceStream;
         }
 
         public char? ReadNext()
         {
-            if (charBuffer.Count > 0)
+            if (CharBuffer.Count > 0)
             {
-                BufferedChar buffered = charBuffer.Dequeue();
-                CurrentChar = buffered.storedChar;
-                CurrentColumn = buffered.storedCharColumn;
-                CurrentLine = buffered.storedCharLine;
+                BufferedChar buffered = CharBuffer.Dequeue();
+                CurrentChar = buffered.StoredChar;
+                CurrentColumn = buffered.StoredCharColumn;
+                CurrentLine = buffered.StoredCharLine;
             }
             else
             {
@@ -243,21 +236,32 @@ namespace Interpreter
             return CurrentChar;
         }
 
+        public string ReadWhile(System.Func<char, bool> testFunc)
+        {
+            System.Text.StringBuilder content = new System.Text.StringBuilder();
+            content.Append(CurrentChar);
+            while (Peek().HasValue && testFunc(Peek().Value))
+            {
+                content.Append(ReadNext());
+            }
+            return content.ToString();
+        }
+
         public char? Peek(int offset = 0)
         {
-            if (charBuffer.Count > offset)
+            if (CharBuffer.Count > offset)
             {
-                return charBuffer.ElementAt(offset).storedChar;
+                return CharBuffer.ElementAt(offset).StoredChar;
             }
 
-            offset -= charBuffer.Count;
+            offset -= CharBuffer.Count;
             char? nextChar = null;
             for (int i = 0; i <= offset; i++)
             {
                 nextChar = ReadNextFromSource();
                 if (nextChar.HasValue)
                 {
-                    charBuffer.Enqueue(new BufferedChar(nextChar.Value, ReaderColumn, ReaderLine));
+                    CharBuffer.Enqueue(new BufferedChar(nextChar.Value, ReaderColumn, ReaderLine));
                 }
                 else
                 {
@@ -274,10 +278,10 @@ namespace Interpreter
                 ReaderColumn = 0;
                 ReaderLine++;
             }
-            int nextChar = sourceStream.Read();
+            int nextChar = SourceStream.Read();
             if (nextChar == '\r')
             {
-                nextChar = sourceStream.Read();
+                nextChar = SourceStream.Read();
             }
             if (nextChar != -1)
             {
@@ -290,8 +294,8 @@ namespace Interpreter
 
     public class Token
     {
-        public enum Types { Identifier, Number, LParen, RParen, OpPlus, OpMinus, KwVar, KwInt,
-            KwString, OpAssignment, OpRange, String, KwFor, KwEnd, KwIn, KwDo, KwRead, KwPrint,
+        public enum Types { Identifier, IntLiteral, LParen, RParen, OpPlus, OpMinus, KwVar, KwInt,
+            KwString, OpAssignment, OpRange, StringLiteral, KwFor, KwEnd, KwIn, KwDo, KwRead, KwPrint,
             KwBool, KwAssert, OpMultiply, OpDivide, OpLess, OpEquals, OpAnd, OpNot, LineTerm };
 
         public Types Type { get; }
