@@ -24,6 +24,7 @@ namespace Lexer
             OperatorTokens.Add("&", Token.Types.OpAnd);
             OperatorTokens.Add("!", Token.Types.OpNot);
             OperatorTokens.Add(";", Token.Types.LineTerm);
+            OperatorTokens.Add(":", Token.Types.Colon);
             OperatorTokens.Add(":=", Token.Types.OpAssignment);
             OperatorTokens.Add("..", Token.Types.OpRange);
             KeywordTokens.Add("var", Token.Types.KwVar);
@@ -296,7 +297,8 @@ namespace Lexer
     {
         public enum Types { Identifier, IntLiteral, LParen, RParen, OpPlus, OpMinus, KwVar, KwInt,
             KwString, OpAssignment, OpRange, StringLiteral, KwFor, KwEnd, KwIn, KwDo, KwRead, KwPrint,
-            KwBool, KwAssert, OpMultiply, OpDivide, OpLess, OpEquals, OpAnd, OpNot, LineTerm };
+            KwBool, KwAssert, OpMultiply, OpDivide, OpLess, OpEquals, OpAnd, OpNot, LineTerm, Colon
+        };
 
         public Types Type { get; }
         public string Content { get; }

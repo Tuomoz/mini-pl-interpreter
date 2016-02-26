@@ -141,6 +141,14 @@ namespace UnitTests
         }
 
         [TestMethod]
+        public void TestColonToken()
+        {
+            Scanner lexer = CreateStringLexer(":");
+            Token token = lexer.GetNextToken();
+            Assert.AreEqual(Token.Types.Colon, token.Type);
+        }
+
+        [TestMethod]
         public void TestOpMinusToken()
         {
             Scanner lexer = CreateStringLexer("-");
