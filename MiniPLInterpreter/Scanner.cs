@@ -6,27 +6,27 @@ namespace Lexer
     public class Scanner
     {
         private SourceReader Source;
-        private Dictionary<string, Token.Types> OperatorTokens = new Dictionary<string, Token.Types>();
+        private Dictionary<string, Token.Types> SymbolTokens = new Dictionary<string, Token.Types>();
         private Dictionary<char, char> EscapeCharacters = new Dictionary<char, char>();
         private Dictionary<string, Token.Types> KeywordTokens = new Dictionary<string, Token.Types>();
 
         public Scanner(SourceReader source)
         {
             Source = source;
-            OperatorTokens.Add("(", Token.Types.LParen);
-            OperatorTokens.Add(")", Token.Types.RParen);
-            OperatorTokens.Add("+", Token.Types.OpPlus);
-            OperatorTokens.Add("-", Token.Types.OpMinus);
-            OperatorTokens.Add("/", Token.Types.OpDivide);
-            OperatorTokens.Add("*", Token.Types.OpMultiply);
-            OperatorTokens.Add("<", Token.Types.OpLess);
-            OperatorTokens.Add("=", Token.Types.OpEquals);
-            OperatorTokens.Add("&", Token.Types.OpAnd);
-            OperatorTokens.Add("!", Token.Types.OpNot);
-            OperatorTokens.Add(";", Token.Types.LineTerm);
-            OperatorTokens.Add(":", Token.Types.Colon);
-            OperatorTokens.Add(":=", Token.Types.OpAssignment);
-            OperatorTokens.Add("..", Token.Types.OpRange);
+            SymbolTokens.Add("(", Token.Types.LParen);
+            SymbolTokens.Add(")", Token.Types.RParen);
+            SymbolTokens.Add("+", Token.Types.OpPlus);
+            SymbolTokens.Add("-", Token.Types.OpMinus);
+            SymbolTokens.Add("/", Token.Types.OpDivide);
+            SymbolTokens.Add("*", Token.Types.OpMultiply);
+            SymbolTokens.Add("<", Token.Types.OpLess);
+            SymbolTokens.Add("=", Token.Types.OpEquals);
+            SymbolTokens.Add("&", Token.Types.OpAnd);
+            SymbolTokens.Add("!", Token.Types.OpNot);
+            SymbolTokens.Add(";", Token.Types.LineTerm);
+            SymbolTokens.Add(":", Token.Types.Colon);
+            SymbolTokens.Add(":=", Token.Types.OpAssignment);
+            SymbolTokens.Add("..", Token.Types.OpRange);
             KeywordTokens.Add("var", Token.Types.KwVar);
             KeywordTokens.Add("int", Token.Types.KwInt);
             KeywordTokens.Add("string", Token.Types.KwString);
@@ -66,13 +66,13 @@ namespace Lexer
 
             int newTokenLine = Source.CurrentLine, newTokenColumn = Source.CurrentColumn;
 
-            if (OperatorTokens.ContainsKey(Source.CurrentAndPeek))
+            if (SymbolTokens.ContainsKey(Source.CurrentAndPeek))
             {
-                return new Token(OperatorTokens[Source.CurrentAndPeek], newTokenLine, newTokenColumn);
+                return new Token(SymbolTokens[Source.CurrentAndPeek], newTokenLine, newTokenColumn);
             }
-            else if (OperatorTokens.ContainsKey(Source.CurrentChar.ToString()))
+            else if (SymbolTokens.ContainsKey(Source.CurrentChar.ToString()))
             {
-                return new Token(OperatorTokens[Source.CurrentChar.ToString()], newTokenLine, newTokenColumn);
+                return new Token(SymbolTokens[Source.CurrentChar.ToString()], newTokenLine, newTokenColumn);
             }
             else if (char.IsNumber(Source.CurrentChar.Value))
             {
