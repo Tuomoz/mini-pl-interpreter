@@ -234,6 +234,27 @@ namespace UnitTests
         */
 
         [TestMethod]
+        public void TestMultipleTokensWithoutSpaces()
+        {
+            Scanner lexer = CreateStringLexer("!:=(123\"lol\"asd");
+            Assert.AreEqual(Token.Types.OpNot, lexer.GetNextToken().Type);
+            Assert.AreEqual(Token.Types.OpAssignment, lexer.GetNextToken().Type);
+            Assert.AreEqual(Token.Types.LParen, lexer.GetNextToken().Type);
+            Assert.AreEqual(Token.Types.IntLiteral, lexer.GetNextToken().Type);
+            Assert.AreEqual(Token.Types.StringLiteral, lexer.GetNextToken().Type);
+            Assert.AreEqual(Token.Types.Identifier, lexer.GetNextToken().Type);
+        }
+
+        [TestMethod]
+        public void TestOverlappingTokens()
+        {
+            Scanner lexer = CreateStringLexer("::==");
+            Assert.AreEqual(Token.Types.Colon, lexer.GetNextToken().Type);
+            Assert.AreEqual(Token.Types.OpAssignment, lexer.GetNextToken().Type);
+            Assert.AreEqual(Token.Types.OpEquals, lexer.GetNextToken().Type);
+        }
+
+        [TestMethod]
         public void TestMultipleTokensOnSameLine()
         {
             Scanner lexer = CreateStringLexer("int string var");

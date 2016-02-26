@@ -68,7 +68,9 @@ namespace Lexer
 
             if (SymbolTokens.ContainsKey(Source.CurrentAndPeek))
             {
-                return new Token(SymbolTokens[Source.CurrentAndPeek], newTokenLine, newTokenColumn);
+                Token.Types newTokenType = SymbolTokens[Source.CurrentAndPeek];
+                Source.ReadNext();
+                return new Token(newTokenType, newTokenLine, newTokenColumn);
             }
             else if (SymbolTokens.ContainsKey(Source.CurrentChar.ToString()))
             {
