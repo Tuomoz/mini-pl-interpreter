@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Interpreter;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Lexer
@@ -6,13 +7,15 @@ namespace Lexer
     public class Scanner
     {
         private SourceReader Source;
+        private ErrorHandler ErrorHandler;
         private Dictionary<string, Token.Types> SymbolTokens = new Dictionary<string, Token.Types>();
         private Dictionary<char, char> EscapeCharacters = new Dictionary<char, char>();
         private Dictionary<string, Token.Types> KeywordTokens = new Dictionary<string, Token.Types>();
 
-        public Scanner(SourceReader source)
+        public Scanner(SourceReader source, ErrorHandler errorHandler)
         {
             Source = source;
+            ErrorHandler = errorHandler;
             SymbolTokens.Add("(", Token.Types.LParen);
             SymbolTokens.Add(")", Token.Types.RParen);
             SymbolTokens.Add("+", Token.Types.OpPlus);
@@ -100,9 +103,11 @@ namespace Lexer
             }
             else
             {
-                throw new LexerException(
+                ErrorHandler.AddError(
                     string.Format("Unknown token '{0}' at line {1} column {2}",
-                    Source.CurrentChar, Source.CurrentLine, Source.CurrentColumn));
+                    Source.CurrentChar, Source.CurrentLine, Source.CurrentColumn),
+                    ErrorTypes.LexerError);
+                return GetNextToken();
             }
         }
 
@@ -120,9 +125,10 @@ namespace Lexer
                     }
                     catch (KeyNotFoundException)
                     {
-                        throw new LexerException(
+                        ErrorHandler.AddError(
                             string.Format("Unrecognized escape sequence '\\{0}' at line {1} column {2}",
-                            Source.CurrentChar, Source.CurrentLine, Source.CurrentColumn));
+                            Source.CurrentChar, Source.CurrentLine, Source.CurrentColumn),
+                            ErrorTypes.LexerError);
                     }
                 }
                 else
@@ -130,12 +136,16 @@ namespace Lexer
                     TokenContentBuilder.Append(Source.CurrentChar.Value);
                 }
             }
-            Source.ReadNext();
-            if (Source.CurrentChar != '"')
+            if (Source.Peek() == '"')
             {
-                throw new LexerException(
+                Source.ReadNext();
+            }
+            else
+            {
+                ErrorHandler.AddError(
                     string.Format("EOL while scanning string literal at line {0} column {1}",
-                    Source.CurrentLine, Source.CurrentColumn));
+                    Source.CurrentLine, Source.CurrentColumn),
+                    ErrorTypes.LexerError);
             }
             return TokenContentBuilder.ToString();
         }
@@ -178,9 +188,10 @@ namespace Lexer
                     Source.ReadNext();
                     if (commentDepth > 0)
                     {
-                        throw new LexerException(
+                        ErrorHandler.AddError(
                             string.Format("EOF while scanning comment beginning at line {0} column {1}",
-                            commentBeginLine, commentBeginColumn));
+                            commentBeginLine, commentBeginColumn),
+                            ErrorTypes.LexerError);
                     }
                 }
                 SkipWhitespace();
@@ -327,23 +338,6 @@ namespace Lexer
             if (Content != null)
                 return string.Format("{0}<{1},{2}>: {3}", Type, Line, Column, Content);
             return string.Format("{0}<{1},{2}>", Type, Line, Column);
-        }
-    }
-
-    public class LexerException : System.Exception
-    {
-        public LexerException()
-        {
-        }
-
-        public LexerException(string message)
-            : base(message)
-        {
-        }
-
-        public LexerException(string message, System.Exception inner)
-            : base(message, inner)
-        {
         }
     }
 }

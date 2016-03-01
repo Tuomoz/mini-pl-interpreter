@@ -1,11 +1,18 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Lexer;
+using Interpreter;
 
 namespace UnitTests
 {
     [TestClass]
     public class LexerTests
     {
+        ErrorHandler errors;
+        [TestInitialize()]
+        public void Initialize()
+        {
+            errors = new ErrorHandler();
+        }
         /*
         Basic tests for all token types
         */
@@ -315,48 +322,27 @@ namespace UnitTests
         public void TestUnknownStringEscape()
         {
             Scanner lexer = CreateStringLexer("\"asd \\a\"");
-            try
-            {
-                lexer.GetNextToken();
-            }
-            catch (LexerException e)
-            {
-                StringAssert.Equals(e, "Unrecognized escape sequence at line 1 column 7");
-                return;
-            }
-            Assert.Fail("No exception was thrown.");
+            lexer.GetNextToken();
+            string errorMessage = errors.GetErrors()[0].ToString();
+            StringAssert.Equals(errorMessage, "LexerError: Unrecognized escape sequence at line 1 column 7");
         }
 
         [TestMethod]
         public void TestUnclosedString()
         {
             Scanner lexer = CreateStringLexer("\"asd\n");
-            try
-            {
-                lexer.GetNextToken();
-            }
-            catch (LexerException e)
-            {
-                StringAssert.Equals(e, "EOL while scanning string literal at line 1 column 5");
-                return;
-            }
-            Assert.Fail("No exception was thrown.");
+            lexer.GetNextToken();
+            string errorMessage = errors.GetErrors()[0].ToString();
+            StringAssert.Equals(errorMessage, "LexerError: EOL while scanning string literal at line 1 column 5");
         }
 
         [TestMethod]
         public void TestUnknownToken()
         {
             Scanner lexer = CreateStringLexer("@");
-            try
-            {
-                lexer.GetNextToken();
-            }
-            catch (LexerException e)
-            {
-                StringAssert.Equals(e, "Unknown token at line 1 column 1");
-                return;
-            }
-            Assert.Fail("No exception was thrown.");
+            lexer.GetNextToken();
+            string errorMessage = errors.GetErrors()[0].ToString();
+            StringAssert.Equals(errorMessage, "LexerError: Unknown token at line 1 column 1");
         }
 
         /*
@@ -454,16 +440,9 @@ namespace UnitTests
         {
             Scanner lexer = CreateStringLexer("var/*int\nstring");
             Assert.AreEqual(Token.Types.KwVar, lexer.GetNextToken().Type);
-            try
-            {
-                lexer.GetNextToken();
-            }
-            catch (LexerException e)
-            {
-                StringAssert.Equals(e, "EOF while scanning comment beginning at line 1 column 4");
-                return;
-            }
-            Assert.Fail("No exception was thrown.");
+            lexer.GetNextToken();
+            string errorMessage = errors.GetErrors()[0].ToString();
+            StringAssert.Equals(errorMessage, "EOF while scanning comment beginning at line 1 column 4");
         }
 
         [TestMethod]
@@ -493,7 +472,7 @@ namespace UnitTests
         public Scanner CreateStringLexer(string source)
         {
             SourceReader reader = new SourceReader(new System.IO.StringReader(source));
-            return new Scanner(reader);
+            return new Scanner(reader, errors);
         }
     }
 }
