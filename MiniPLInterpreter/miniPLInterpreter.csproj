@@ -43,6 +43,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Ast.cs" />
+    <Compile Include="AstVisitor.cs" />
     <Compile Include="ErrorHandler.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="Scanner.cs" />
