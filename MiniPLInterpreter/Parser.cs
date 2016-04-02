@@ -308,13 +308,17 @@ namespace Lexer
 
         private TypeNode ParseType()
         {
-            if (CurrentToken.Type == Token.Types.KwInt
-                || CurrentToken.Type == Token.Types.KwString
-                || CurrentToken.Type == Token.Types.KwBool)
+            if (Accept(Token.Types.KwInt))
             {
-                TypeNode node = new TypeNode(CurrentToken.Line, CurrentToken.Column, TypeNode.Types.IntType);
-                NextToken();
-                return node;
+                return new TypeNode(CurrentToken.Line, CurrentToken.Column, NodeTypes.IntType);
+            }
+            else if (Accept(Token.Types.KwString))
+            {
+                return new TypeNode(CurrentToken.Line, CurrentToken.Column, NodeTypes.StringType);
+            }
+            else if (Accept(Token.Types.KwBool))
+            {
+                return new TypeNode(CurrentToken.Line, CurrentToken.Column, NodeTypes.BoolType);
             }
             else
                 throw new System.Exception();
