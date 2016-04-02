@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace Lexer
 {
+    public enum NodeTypes { IntType, StringType, BoolType, VoidType };
+    public enum Operator { Plus, Minus, Times, Divide, Less, Equals, And, Not }
+
     abstract class AstNode
     {
         int Line, Column;
@@ -26,6 +29,9 @@ namespace Lexer
 
     abstract class Expression : AstNode
     {
+        public NodeTypes NodeType { get; set; } = NodeTypes.VoidType;
+        public object ExprValue;
+
         public Expression(int line, int column) : base(line, column) { }
     }
 
@@ -67,7 +73,7 @@ namespace Lexer
     {
         public string IdentifierName { get; set; }
 
-        public IdentifierExpr(int line, int column, String identifierName) : base(line, column)
+        public IdentifierExpr(int line, int column, string identifierName) : base(line, column)
         {
             IdentifierName = identifierName;
         }
@@ -80,10 +86,9 @@ namespace Lexer
 
     class TypeNode : AstNode
     {
-        public enum Types { IntType, StringType, BoolType };
-        public Types Type;
+        public NodeTypes Type;
 
-        public TypeNode(int line, int column, Types type) : base (line, column)
+        public TypeNode(int line, int column, NodeTypes type) : base (line, column)
         {
             Type = type;
         }
@@ -160,7 +165,6 @@ namespace Lexer
 
     class BinaryExpr : Expression
     {
-        public enum Operator { Plus, Minus, Times, Divide, Less, Equals, And }
         public Operator Op { get; set; }
         public Expression Left { get; set; }
         public Expression Right { get; set; }
@@ -175,9 +179,8 @@ namespace Lexer
 
     class UnaryExpr : Expression
     {
-        public enum Operator { Not}
         public Operator Op { get; set; }
-        public Expression Exp { get; set; }
+        public Expression Expr { get; set; }
 
         public UnaryExpr(int line, int column) : base(line, column) { }
 
@@ -196,6 +199,7 @@ namespace Lexer
         public override void Accept(IAstVisitor visitor)
         {
             visitor.Visit(this);
+            NodeType = NodeTypes.IntType;
         }
     }
 
@@ -208,6 +212,7 @@ namespace Lexer
         public override void Accept(IAstVisitor visitor)
         {
             visitor.Visit(this);
+            NodeType = NodeTypes.StringType;
         }
     }
 }

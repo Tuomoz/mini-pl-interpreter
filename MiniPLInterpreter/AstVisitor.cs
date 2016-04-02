@@ -25,67 +25,67 @@ namespace Lexer
 
     abstract class DefaultVisitor : IAstVisitor
     {
-        public void Visit(IdentifierExpr identifierNode)
+        public virtual void Visit(IdentifierExpr identifierNode)
         {
             DefaultVisit(identifierNode);
         }
 
-        public void Visit(AssignmentStmt assignmentStmt)
+        public virtual void Visit(AssignmentStmt assignmentStmt)
         {
             DefaultVisit(assignmentStmt);
         }
 
-        public void Visit(ReadStmt readStmt)
+        public virtual void Visit(ReadStmt readStmt)
         {
             DefaultVisit(readStmt);
         }
 
-        public void Visit(BinaryExpr binaryExpr)
+        public virtual void Visit(BinaryExpr binaryExpr)
         {
             DefaultVisit(binaryExpr);
         }
 
-        public void Visit(IntLiteralExpr intLiteralExpr)
+        public virtual void Visit(IntLiteralExpr intLiteralExpr)
         {
             DefaultVisit(intLiteralExpr);
         }
 
-        public void Visit(StringLiteralExpr stringLiteralExpr)
+        public virtual void Visit(StringLiteralExpr stringLiteralExpr)
         {
             DefaultVisit(stringLiteralExpr);
         }
 
-        public void Visit(PrintStmt printStmt)
+        public virtual void Visit(PrintStmt printStmt)
         {
             DefaultVisit(printStmt);
         }
 
-        public void Visit(UnaryExpr unaryExpr)
+        public virtual void Visit(UnaryExpr unaryExpr)
         {
             DefaultVisit(unaryExpr);
         }
 
-        public void Visit(AssertStmt assertStmt)
+        public virtual void Visit(AssertStmt assertStmt)
         {
             DefaultVisit(assertStmt);
         }
 
-        public void Visit(ForStmt forStmt)
+        public virtual void Visit(ForStmt forStmt)
         {
             DefaultVisit(forStmt);
         }
 
-        public void Visit(TypeNode typeNode)
+        public virtual void Visit(TypeNode typeNode)
         {
             DefaultVisit(typeNode);
         }
 
-        public void Visit(DeclarationStmt declarationStmt)
+        public virtual void Visit(DeclarationStmt declarationStmt)
         {
             DefaultVisit(declarationStmt);
         }
 
-        public void Visit(StmtList stmtList)
+        public virtual void Visit(StmtList stmtList)
         {
             DefaultVisit(stmtList);
         }
@@ -163,7 +163,7 @@ namespace Lexer
             TreeLevel++;
             PrintNode("UnaryExpr");
             PrintNode(unaryExpr.Op.ToString(), true);
-            unaryExpr.Exp.Accept(this);
+            unaryExpr.Expr.Accept(this);
             TreeLevel--;
         }
 
@@ -214,6 +214,89 @@ namespace Lexer
         public void Visit(AstNode node)
         {
             PrintNode(node.ToString(), true);
+        }
+    }
+
+    class TypeCheckerVisitor : DefaultVisitor
+    {
+        public SymbolTable SymbolTable = new SymbolTable();
+        private TypeChecker Checker = new TypeChecker();
+
+        public override void Visit(StmtList stmtList)
+        {
+            foreach (Statement statement in stmtList.Statements)
+            {
+                statement.Accept(this);
+            }
+        }
+
+        public override void Visit(DeclarationStmt declarationStmt)
+        {
+            IdentifierExpr id = declarationStmt.Identifier;
+            SymbolTable.AddSymbol(id.IdentifierName, declarationStmt.Type.Type);
+            if (declarationStmt.AssignmentExpr != null)
+            {
+                declarationStmt.AssignmentExpr.Accept(this);
+                if (declarationStmt.AssignmentExpr.NodeType != declarationStmt.Type.Type)
+                    throw new Exception("Wrong type");
+            }
+            declarationStmt.Identifier.NodeType = declarationStmt.Type.Type;
+        }
+
+        public override void Visit(AssignmentStmt assignmentStmt)
+        {
+            assignmentStmt.Identifier.Accept(this);
+            assignmentStmt.AssignmentExpr.Accept(this);
+            if (assignmentStmt.Identifier.NodeType != assignmentStmt.AssignmentExpr.NodeType)
+                throw new Exception("Wrong type");
+
+        }
+
+        public override void Visit(BinaryExpr binaryExpr)
+        {
+            binaryExpr.Left.Accept(this);
+            binaryExpr.Right.Accept(this);
+            NodeTypes leftType = binaryExpr.Left.NodeType, rightType = binaryExpr.Right.NodeType;
+            binaryExpr.NodeType = Checker.TypeCheck(leftType, rightType, binaryExpr.Op);
+        }
+
+        public override void Visit(UnaryExpr unaryExpr)
+        {
+            unaryExpr.Expr.Accept(this);
+            unaryExpr.NodeType = Checker.TypeCheck(unaryExpr.Expr.NodeType, unaryExpr.Op);
+        }
+
+        public override void Visit(AssertStmt assertStmt)
+        {
+            assertStmt.AssertExpr.Accept(this);
+            if (assertStmt.AssertExpr.NodeType != NodeTypes.BoolType)
+                throw new Exception("Wrong type");
+        }
+
+        public override void Visit(ForStmt forStmt)
+        {
+            forStmt.StartExpr.Accept(this);
+            forStmt.EndExpr.Accept(this);
+            forStmt.LoopVar.Accept(this);
+            if (forStmt.LoopVar.NodeType != NodeTypes.IntType
+                || forStmt.StartExpr.NodeType != NodeTypes.IntType
+                || forStmt.EndExpr.NodeType != NodeTypes.IntType)
+                throw new Exception("Wrong type");
+        }
+
+        public override void Visit(PrintStmt printStmt)
+        {
+            printStmt.PrintExpr.Accept(this);
+        }
+
+        public override void Visit(ReadStmt readStmt)
+        {
+            readStmt.Variable.Accept(this);
+        }
+
+        public override void Visit(IdentifierExpr identifierNode)
+        {
+            identifierNode.NodeType = SymbolTable.GetSymbolType(identifierNode.IdentifierName);
         }
     }
 }

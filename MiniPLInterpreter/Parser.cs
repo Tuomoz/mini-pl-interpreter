@@ -14,11 +14,9 @@ namespace Lexer
             CurrentToken = Scanner.GetNextToken();
         }
 
-        public void Parse()
+        public StmtList Parse()
         {
-            StmtList ast = ParseProgram();
-            AstPrinterVisitor printer = new AstPrinterVisitor();
-            ast.Accept(printer);
+            return ParseProgram();
         }
 
         private void NextToken()
@@ -57,13 +55,13 @@ namespace Lexer
             BinaryExpr expr = new BinaryExpr(token.Line, token.Column);
             switch(token.Type)
             {
-                case Token.Types.OpPlus: expr.Op = BinaryExpr.Operator.Plus; break;
-                case Token.Types.OpMinus: expr.Op = BinaryExpr.Operator.Minus; break;
-                case Token.Types.OpMultiply: expr.Op = BinaryExpr.Operator.Times; break;
-                case Token.Types.OpDivide: expr.Op = BinaryExpr.Operator.Divide; break;
-                case Token.Types.OpLess: expr.Op = BinaryExpr.Operator.Less; break;
-                case Token.Types.OpEquals: expr.Op = BinaryExpr.Operator.Equals; break;
-                case Token.Types.OpAnd: expr.Op = BinaryExpr.Operator.And; break;
+                case Token.Types.OpPlus: expr.Op = Operator.Plus; break;
+                case Token.Types.OpMinus: expr.Op = Operator.Minus; break;
+                case Token.Types.OpMultiply: expr.Op = Operator.Times; break;
+                case Token.Types.OpDivide: expr.Op = Operator.Divide; break;
+                case Token.Types.OpLess: expr.Op = Operator.Less; break;
+                case Token.Types.OpEquals: expr.Op = Operator.Equals; break;
+                case Token.Types.OpAnd: expr.Op = Operator.And; break;
             }
             return expr;
         }
@@ -171,8 +169,8 @@ namespace Lexer
             {
                 UnaryExpr unary = new UnaryExpr(AcceptedToken.Line, AcceptedToken.Column);
                 Expression exp = ParseFactor();
-                unary.Op = UnaryExpr.Operator.Not;
-                unary.Exp = exp;
+                unary.Op = Operator.Not;
+                unary.Expr = exp;
                 return unary;
             }
             else
@@ -246,9 +244,9 @@ namespace Lexer
                 BinaryExpr exp = new BinaryExpr(CurrentToken.Line, CurrentToken.Column);
                 exp.Left = leftExp;
                 if (CurrentToken.Type == Token.Types.OpPlus)
-                    exp.Op = BinaryExpr.Operator.Plus;
+                    exp.Op = Operator.Plus;
                 else
-                    exp.Op = BinaryExpr.Operator.Minus;
+                    exp.Op = Operator.Minus;
                 NextToken();
                 Expression right = ParseTerm();
                 exp.Right = right;
@@ -287,9 +285,9 @@ namespace Lexer
                 BinaryExpr exp = new BinaryExpr(CurrentToken.Line, CurrentToken.Column);
                 exp.Left = leftExp;
                 if (CurrentToken.Type == Token.Types.OpMultiply)
-                    exp.Op = BinaryExpr.Operator.Times;
+                    exp.Op = Operator.Times;
                 else
-                    exp.Op = BinaryExpr.Operator.Divide;
+                    exp.Op = Operator.Divide;
                 NextToken();
                 Expression right = ParseFactor();
                 exp.Right = right;
