@@ -213,13 +213,13 @@ namespace Lexer
             if (Accept(Token.Types.IntLiteral))
             {
                 IntLiteralExpr exp = new IntLiteralExpr(AcceptedToken.Line, AcceptedToken.Column);
-                exp.Value = int.Parse(AcceptedToken.Content);
+                exp.ExprValue = int.Parse(AcceptedToken.Content);
                 return exp;
             }
             else if (Accept(Token.Types.StringLiteral))
             {
                 StringLiteralExpr expr = new StringLiteralExpr(AcceptedToken.Line, AcceptedToken.Column);
-                expr.Value = AcceptedToken.Content;
+                expr.ExprValue = AcceptedToken.Content;
                 return expr;
             }
             else if (Accept(Token.Types.Identifier))

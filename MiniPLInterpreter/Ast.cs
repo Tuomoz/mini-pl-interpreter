@@ -192,8 +192,6 @@ namespace Lexer
 
     class IntLiteralExpr : Expression
     {
-        public int Value { get; set; }
-
         public IntLiteralExpr(int line, int column) : base(line, column) { }
 
         public override void Accept(IAstVisitor visitor)
@@ -205,8 +203,6 @@ namespace Lexer
 
     class StringLiteralExpr : Expression
     {
-        public string Value { get; set; }
-
         public StringLiteralExpr(int line, int column) : base(line, column) { }
 
         public override void Accept(IAstVisitor visitor)

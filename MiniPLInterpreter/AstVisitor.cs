@@ -131,12 +131,12 @@ namespace Lexer
 
         public void Visit(IntLiteralExpr intLiteralExpr)
         {
-            PrintNode("Int " + intLiteralExpr.Value.ToString(), true);
+            PrintNode("Int " + intLiteralExpr.ExprValue.ToString(), true);
         }
 
         public void Visit(StringLiteralExpr stringLiteralExpr)
         {
-            PrintNode("String " + stringLiteralExpr.Value, true);
+            PrintNode("String " + stringLiteralExpr.ExprValue, true);
         }
 
         public void Visit(PrintStmt printStmt)
@@ -282,6 +282,7 @@ namespace Lexer
                 || forStmt.StartExpr.NodeType != NodeTypes.IntType
                 || forStmt.EndExpr.NodeType != NodeTypes.IntType)
                 throw new Exception("Wrong type");
+            forStmt.Body.Accept(this);
         }
 
         public override void Visit(PrintStmt printStmt)

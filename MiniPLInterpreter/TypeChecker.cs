@@ -26,12 +26,16 @@ namespace Lexer
             };
             boolTypeBindings = new Dictionary<Operator, NodeTypes>()
             {
-                { Operator.Equals, NodeTypes.BoolType }
+                { Operator.Equals, NodeTypes.BoolType },
+                { Operator.And, NodeTypes.BoolType },
+                { Operator.Not, NodeTypes.BoolType },
+                { Operator.Less, NodeTypes.BoolType }
             };
             stringTypeBindings = new Dictionary<Operator, NodeTypes>()
             {
                 { Operator.Plus, NodeTypes.StringType },
-                { Operator.Equals, NodeTypes.BoolType }
+                { Operator.Equals, NodeTypes.BoolType },
+                { Operator.Less, NodeTypes.BoolType }
             };
             typeBindings = new Dictionary<NodeTypes, Dictionary<Operator, NodeTypes>>()
             {

@@ -29,20 +29,29 @@ namespace Lexer
         {
             return SymbolDic[name];
         }
+
+        public void SetSymbolValue(string name, object value)
+        {
+            SymbolDic[name].Value = value;
+        }
+
+        public object GetSymbolValue(string name)
+        {
+            return SymbolDic[name].Value;
+        }
     }
 
     public class Symbol
     {
         public readonly string Name;
         public readonly Lexer.NodeTypes Type;
-        public dynamic Value { get; set; }
+        public object Value { get; set; }
 
-        public Symbol(string name, NodeTypes type, dynamic value = null)
+        public Symbol(string name, NodeTypes type, object value = null)
         {
             Name = name;
             Type = type;
-            if (value != null)
-                Value = value;
+            Value = value;
         }
     }
 }
