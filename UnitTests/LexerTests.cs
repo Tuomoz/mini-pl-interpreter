@@ -337,6 +337,15 @@ namespace UnitTests
         }
 
         [TestMethod]
+        public void TestEmptyUnclosedString()
+        {
+            Scanner lexer = CreateStringLexer("\"");
+            lexer.GetNextToken();
+            string errorMessage = errors.GetErrors()[0].ToString();
+            StringAssert.Equals(errorMessage, "LexerError: EOL while scanning string literal at line 1 column 1");
+        }
+
+        [TestMethod]
         public void TestUnknownToken()
         {
             Scanner lexer = CreateStringLexer("@");
@@ -417,7 +426,7 @@ namespace UnitTests
         {
             Scanner lexer = CreateStringLexer("var/*int\nstring*/");
             Assert.AreEqual(Token.Types.KwVar, lexer.GetNextToken().Type);
-            Assert.IsNull(lexer.GetNextToken());
+            Assert.AreEqual(Token.Types.EOF, lexer.GetNextToken().Type);
         }
 
         [TestMethod]

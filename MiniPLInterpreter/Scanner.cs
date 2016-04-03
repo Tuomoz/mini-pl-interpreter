@@ -114,7 +114,7 @@ namespace Lexer
         private string BuildStringLiteral()
         {
             System.Text.StringBuilder TokenContentBuilder = new System.Text.StringBuilder();
-            while (Source.Peek() != '"' && Source.Peek() != '\n')
+            while (Source.Peek() != '"' && Source.Peek() != '\n' && Source.Peek().HasValue)
             {
                 if (Source.ReadNext() == '\\')
                 {
@@ -142,6 +142,7 @@ namespace Lexer
             }
             else
             {
+                Source.ReadNext();
                 ErrorHandler.AddError(
                     string.Format("EOL while scanning string literal at line {0} column {1}",
                     Source.CurrentLine, Source.CurrentColumn),
@@ -162,7 +163,7 @@ namespace Lexer
             {
                 if (Source.Peek() == '/')
                 {
-                    while (Source.CurrentChar != '\n')
+                    while (Source.CurrentChar.HasValue && Source.CurrentChar != '\n')
                     {
                         Source.ReadNext();
                     }
