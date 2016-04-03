@@ -1,0 +1,15 @@
+// Testing various logical operations
+var x : bool := 1 < 2;
+assert (x);
+print "1 < 2 is ";
+print x;
+
+assert (5 = 5);
+assert (!(1 = 2));
+assert ((1 = 2) < x);
+
+var true : bool := 1 = 1;
+var false : bool := 1 = 2;
+assert (true & !(false));
+assert (!(true) = false);
+assert (!(!(true)));

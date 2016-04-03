@@ -1,0 +1,31 @@
+/*
+FizzBuzz in MiniPL.
+While MiniPL has no if-statements, we can simulate them with the for loops
+by noticing that a for-loop 0..0 is executed only once and for example
+1..0 is never executed. The modulo-operator is also easy to replace with the
+formula remainder = a - (a / b) * b. Combining these features we can fairly
+easily implement the FizzBuzz program.
+*/
+
+var i : int; // Used for the main loop
+var k : int; // Used as the mandatory loop variable in the "if-fors"
+var rem : int; // Used to store the remainder calculations
+var ifNum : int; // Used to tell if we should print the current is as a number
+
+for i in 1..100 do
+	ifNum := 0;
+	rem := i - (i / 3) * 3;
+	for k in rem..0 do // if i % 3 == 0
+		print "fizz";
+		ifNum := 1;
+	end for;
+	rem := i - (i / 5) * 5;
+	for k in rem..0 do // if i % 5 == 0
+		print "buzz";
+		ifNum := 1;
+	end for;
+	for k in ifNum..0 do // if ifNum == 1
+		print i;
+	end for;
+	print "\n";
+end for;
