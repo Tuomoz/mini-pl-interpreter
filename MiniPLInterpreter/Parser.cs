@@ -104,15 +104,13 @@ namespace Lexer
             {
                 DeclarationStmt declaration = new DeclarationStmt(AcceptedToken.Line, AcceptedToken.Column);
                 Token id = Match(Token.Types.Identifier);
-                IdentifierExpr idNode = new IdentifierExpr(id.Line, id.Column, id.Content);
-                declaration.Identifier = idNode;
+                declaration.Identifier = new IdentifierExpr(id.Line, id.Column, id.Content);
                 Match(Token.Types.Colon);
                 TypeNode typeNode = ParseType();
                 declaration.Type = typeNode;
                 if (Accept(Token.Types.OpAssignment))
                 {
-                    Expression assignment = ParseExpression();
-                    declaration.AssignmentExpr = assignment;
+                    declaration.AssignmentExpr = ParseExpression();
                 }
                 return declaration;
             }
@@ -168,9 +166,8 @@ namespace Lexer
             if (Accept(Token.Types.OpNot))
             {
                 UnaryExpr unary = new UnaryExpr(AcceptedToken.Line, AcceptedToken.Column);
-                Expression exp = ParseFactor();
                 unary.Op = Operator.Not;
-                unary.Expr = exp;
+                unary.Expr = ParseFactor();
                 return unary;
             }
             else
@@ -238,18 +235,11 @@ namespace Lexer
 
         private BinaryExpr ParseTermTail(Expression leftExp)
         {
-            if (CurrentToken.Type == Token.Types.OpPlus
-                || CurrentToken.Type == Token.Types.OpMinus)
+            if (Accept(new[] { Token.Types.OpPlus, Token.Types.OpMinus }))
             {
-                BinaryExpr exp = new BinaryExpr(CurrentToken.Line, CurrentToken.Column);
+                BinaryExpr exp = CreateBinaryExpr();
                 exp.Left = leftExp;
-                if (CurrentToken.Type == Token.Types.OpPlus)
-                    exp.Op = Operator.Plus;
-                else
-                    exp.Op = Operator.Minus;
-                NextToken();
-                Expression right = ParseTerm();
-                exp.Right = right;
+                exp.Right = ParseTerm();
                 BinaryExpr tail = ParseTermTail(exp);
                 if (tail != null)
                 {
@@ -277,20 +267,13 @@ namespace Lexer
             }
         }
 
-        private BinaryExpr ParseFactorTail(Expression leftExp)
+        private BinaryExpr ParseFactorTail(Expression leftExpr)
         {
-            if (CurrentToken.Type == Token.Types.OpMultiply
-                || CurrentToken.Type == Token.Types.OpDivide)
+            if (Accept(new[] { Token.Types.OpMultiply, Token.Types.OpDivide }))
             {
-                BinaryExpr exp = new BinaryExpr(CurrentToken.Line, CurrentToken.Column);
-                exp.Left = leftExp;
-                if (CurrentToken.Type == Token.Types.OpMultiply)
-                    exp.Op = Operator.Times;
-                else
-                    exp.Op = Operator.Divide;
-                NextToken();
-                Expression right = ParseFactor();
-                exp.Right = right;
+                BinaryExpr exp = CreateBinaryExpr();
+                exp.Left = leftExpr;
+                exp.Right = ParseFactor();
                 BinaryExpr tail = ParseFactorTail(exp);
                 if (tail != null)
                 {
