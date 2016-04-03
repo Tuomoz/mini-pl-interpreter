@@ -100,7 +100,7 @@ namespace Interpreter
         {
             string userInput = Console.ReadLine();
             Symbol inputSymbol = SymbolTable.GetSymbol(readStmt.Variable.IdentifierName);
-            switch (readStmt.Variable.NodeType)
+            switch (readStmt.Variable.Type)
             {
                 case ExprType.IntType: inputSymbol.Value = int.Parse(userInput); break;
                 case ExprType.StringType: inputSymbol.Value = userInput; break;
@@ -170,12 +170,12 @@ namespace Interpreter
         }
         public object EvaluateExpression(Expression expression1, Expression expression2, Operator op)
         {
-            return BinaryExprEvaluators[expression1.NodeType][op](expression1.ExprValue, expression2.ExprValue);
+            return BinaryExprEvaluators[expression1.Type][op](expression1.ExprValue, expression2.ExprValue);
         }
 
         public object EvaluateExpression(Expression expr, Operator op)
         {
-            return UnaryExprEvaluators[expr.NodeType][op](expr.ExprValue);
+            return UnaryExprEvaluators[expr.Type][op](expr.ExprValue);
         }
     }
 

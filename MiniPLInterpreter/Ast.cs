@@ -29,7 +29,7 @@ namespace Frontend
 
     abstract class Expression : AstNode
     {
-        public ExprType NodeType { get; set; } = ExprType.VoidType;
+        public ExprType Type { get; set; } = ExprType.VoidType;
         public object ExprValue;
 
         public Expression(int line, int column) : base(line, column) { }
@@ -197,7 +197,7 @@ namespace Frontend
         public override void Accept(IAstVisitor visitor)
         {
             visitor.Visit(this);
-            NodeType = ExprType.IntType;
+            Type = ExprType.IntType;
         }
     }
 
@@ -208,7 +208,7 @@ namespace Frontend
         public override void Accept(IAstVisitor visitor)
         {
             visitor.Visit(this);
-            NodeType = ExprType.StringType;
+            Type = ExprType.StringType;
         }
     }
 }

@@ -48,13 +48,15 @@ namespace Frontend
             {
                 Expression assignment = declarationStmt.AssignmentExpr;
                 assignment.Accept(this);
-                if (assignment.NodeType != declarationStmt.Type.Type)
+                if (assignment.Type == ExprType.VoidType)
+                    return;
+                if (assignment.Type != declarationStmt.Type.Type)
                 {
                     Errors.AddError(String.Format("Can't assign expression of type {0} in variable {1} of type {2} at line {3} column {4}.",
-                        assignment.NodeType, id.IdentifierName, declarationStmt.Type, declarationStmt.Line, declarationStmt.Column), ErrorTypes.SemanticError);
+                        assignment.Type, id.IdentifierName, declarationStmt.Type, declarationStmt.Line, declarationStmt.Column), ErrorTypes.SemanticError);
                 }
             }
-            declarationStmt.Identifier.NodeType = declarationStmt.Type.Type;
+            declarationStmt.Identifier.Type = declarationStmt.Type.Type;
         }
 
         public override void Visit(AssignmentStmt assignmentStmt)
@@ -63,10 +65,12 @@ namespace Frontend
             id.Accept(this);
             Expression assignment = assignmentStmt.AssignmentExpr;
             assignment.Accept(this);
-            if (id.NodeType != assignment.NodeType)
+            if (assignment.Type == ExprType.VoidType)
+                return;
+            if (id.Type != assignment.Type)
             {
                 Errors.AddError(String.Format("Can't assign expression of type {0} in variable {1} of type {2} at line {3} column {4}.",
-                    assignment.NodeType, id.IdentifierName, id.NodeType, assignmentStmt.Line, assignmentStmt.Column), ErrorTypes.SemanticError);
+                    assignment.Type, id.IdentifierName, id.Type, assignmentStmt.Line, assignmentStmt.Column), ErrorTypes.SemanticError);
             }
 
         }
@@ -75,23 +79,23 @@ namespace Frontend
         {
             binaryExpr.Left.Accept(this);
             binaryExpr.Right.Accept(this);
-            binaryExpr.NodeType = Checker.TypeCheck(binaryExpr.Left, binaryExpr.Right, binaryExpr.Op);
+            binaryExpr.Type = Checker.TypeCheck(binaryExpr.Left, binaryExpr.Right, binaryExpr.Op);
         }
 
         public override void Visit(UnaryExpr unaryExpr)
         {
             unaryExpr.Expr.Accept(this);
-            unaryExpr.NodeType = Checker.TypeCheck(unaryExpr.Expr, unaryExpr.Op);
+            unaryExpr.Type = Checker.TypeCheck(unaryExpr.Expr, unaryExpr.Op);
         }
 
         public override void Visit(AssertStmt assertStmt)
         {
             Expression assert = assertStmt.AssertExpr;
             assert.Accept(this);
-            if (assert.NodeType != ExprType.BoolType)
+            if (assert.Type != ExprType.BoolType)
             {
                 Errors.AddError(String.Format("Assertion expression type {0} illegal at line {1} column {2}.",
-                    assert.NodeType, assertStmt.Line, assertStmt.Column), ErrorTypes.SemanticError);
+                    assert.Type, assertStmt.Line, assertStmt.Column), ErrorTypes.SemanticError);
             }
         }
 
@@ -103,12 +107,12 @@ namespace Frontend
             start.Accept(this);
             end.Accept(this);
             loopvar.Accept(this);
-            if (loopvar.NodeType != ExprType.IntType)
+            if (loopvar.Type != ExprType.IntType)
             {
                 Errors.AddError(String.Format("For loop variable {0} of type {0} illegal at line {1} column {2}.",
-                    loopvar.IdentifierName, loopvar.NodeType, loopvar.Line, loopvar.Column), ErrorTypes.SemanticError);
+                    loopvar.IdentifierName, loopvar.Type, loopvar.Line, loopvar.Column), ErrorTypes.SemanticError);
             }
-            if (start.NodeType != ExprType.IntType || end.NodeType != ExprType.IntType)
+            if (start.Type != ExprType.IntType || end.Type != ExprType.IntType)
             {
                 Errors.AddError(String.Format("For loop expressions must be of type int at line {0} column {1}.",
                     forStmt.Line, forStmt.Column), ErrorTypes.SemanticError);
@@ -131,7 +135,7 @@ namespace Frontend
             ExprType? idType = SymbolTable.GetSymbolType(identifierNode.IdentifierName);
             if (idType.HasValue)
             {
-                identifierNode.NodeType = idType.Value;
+                identifierNode.Type = idType.Value;
             }
             else
             {
