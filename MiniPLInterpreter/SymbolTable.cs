@@ -20,24 +20,35 @@ namespace Lexer
             return true;
         }
 
-        public NodeTypes GetSymbolType(string name)
+        public NodeTypes? GetSymbolType(string name)
         {
-            return SymbolDic[name].Type;
+            if (SymbolDic.ContainsKey(name))
+                return SymbolDic[name].Type;
+            return null;
         }
 
         public Symbol GetSymbol(string name)
         {
-            return SymbolDic[name];
+            if (SymbolDic.ContainsKey(name))
+                return SymbolDic[name];
+            return null;
         }
 
-        public void SetSymbolValue(string name, object value)
+        public bool SetSymbolValue(string name, object value)
         {
-            SymbolDic[name].Value = value;
+            if (SymbolDic.ContainsKey(name))
+            {
+                SymbolDic[name].Value = value;
+                return true;
+            }
+            return false;   
         }
 
         public object GetSymbolValue(string name)
         {
-            return SymbolDic[name].Value;
+            if (SymbolDic.ContainsKey(name))
+                return SymbolDic[name].Value;
+            return null;
         }
     }
 

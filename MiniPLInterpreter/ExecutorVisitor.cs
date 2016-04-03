@@ -12,7 +12,7 @@ namespace Interpreter
 
     class ExecutorVisitor : DefaultVisitor
     {
-        public SymbolTable SymbolTable;
+        private SymbolTable SymbolTable;
         private ExpressionEvaluator Evaluator = new ExpressionEvaluator();
 
         public ExecutorVisitor(SymbolTable symbolTable)
@@ -63,7 +63,8 @@ namespace Interpreter
             assertStmt.AssertExpr.Accept(this);
             if ((bool) assertStmt.AssertExpr.ExprValue != true)
             {
-                throw new Exception("Assert failed");
+                throw new RuntimeException(String.Format("Assertion failed at line {0} column {1}.",
+                    assertStmt.Line, assertStmt.Column));
             }
         }
 
@@ -168,5 +169,10 @@ namespace Interpreter
         {
             return UnaryExprEvaluators[expr.NodeType][op](expr.ExprValue);
         }
+    }
+
+    public class RuntimeException : Exception
+    {
+        public RuntimeException(string message) : base(message) { }
     }
 }

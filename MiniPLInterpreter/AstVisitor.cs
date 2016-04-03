@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Interpreter;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -219,8 +220,16 @@ namespace Lexer
 
     class TypeCheckerVisitor : DefaultVisitor
     {
-        public SymbolTable SymbolTable = new SymbolTable();
-        private TypeChecker Checker = new TypeChecker();
+        public SymbolTable SymbolTable;
+        private TypeChecker Checker;
+        private ErrorHandler Errors;
+
+        public TypeCheckerVisitor(ErrorHandler errors)
+        {
+            SymbolTable = new SymbolTable();
+            Checker = new TypeChecker(errors);
+            Errors = errors;
+        }
 
         public override void Visit(StmtList stmtList)
         {
@@ -233,22 +242,35 @@ namespace Lexer
         public override void Visit(DeclarationStmt declarationStmt)
         {
             IdentifierExpr id = declarationStmt.Identifier;
-            SymbolTable.AddSymbol(id.IdentifierName, declarationStmt.Type.Type);
+            if (!SymbolTable.AddSymbol(id.IdentifierName, declarationStmt.Type.Type))
+            {
+                Errors.AddError(String.Format("Already declared variable {0} at line {1} column {2}.",
+                    id.IdentifierName, id.Line, id.Column), ErrorTypes.SemanticError);
+            }
             if (declarationStmt.AssignmentExpr != null)
             {
-                declarationStmt.AssignmentExpr.Accept(this);
-                if (declarationStmt.AssignmentExpr.NodeType != declarationStmt.Type.Type)
-                    throw new Exception("Wrong type");
+                Expression assignment = declarationStmt.AssignmentExpr;
+                assignment.Accept(this);
+                if (assignment.NodeType != declarationStmt.Type.Type)
+                {
+                    Errors.AddError(String.Format("Can't assign expression of type {0} in variable {1} of type {2} at line {3} column {4}.",
+                        assignment.NodeType, id.IdentifierName, declarationStmt.Type, declarationStmt.Line, declarationStmt.Column), ErrorTypes.SemanticError);
+                }
             }
             declarationStmt.Identifier.NodeType = declarationStmt.Type.Type;
         }
 
         public override void Visit(AssignmentStmt assignmentStmt)
         {
-            assignmentStmt.Identifier.Accept(this);
-            assignmentStmt.AssignmentExpr.Accept(this);
-            if (assignmentStmt.Identifier.NodeType != assignmentStmt.AssignmentExpr.NodeType)
-                throw new Exception("Wrong type");
+            IdentifierExpr id = assignmentStmt.Identifier;
+            id.Accept(this);
+            Expression assignment = assignmentStmt.AssignmentExpr;
+            assignment.Accept(this);
+            if (id.NodeType != assignment.NodeType)
+            {
+                Errors.AddError(String.Format("Can't assign expression of type {0} in variable {1} of type {2} at line {3} column {4}.",
+                    assignment.NodeType, id.IdentifierName, id.NodeType, assignmentStmt.Line, assignmentStmt.Column), ErrorTypes.SemanticError);
+            }
 
         }
 
@@ -256,32 +278,44 @@ namespace Lexer
         {
             binaryExpr.Left.Accept(this);
             binaryExpr.Right.Accept(this);
-            NodeTypes leftType = binaryExpr.Left.NodeType, rightType = binaryExpr.Right.NodeType;
-            binaryExpr.NodeType = Checker.TypeCheck(leftType, rightType, binaryExpr.Op);
+            binaryExpr.NodeType = Checker.TypeCheck(binaryExpr.Left, binaryExpr.Right, binaryExpr.Op);
         }
 
         public override void Visit(UnaryExpr unaryExpr)
         {
             unaryExpr.Expr.Accept(this);
-            unaryExpr.NodeType = Checker.TypeCheck(unaryExpr.Expr.NodeType, unaryExpr.Op);
+            unaryExpr.NodeType = Checker.TypeCheck(unaryExpr.Expr, unaryExpr.Op);
         }
 
         public override void Visit(AssertStmt assertStmt)
         {
-            assertStmt.AssertExpr.Accept(this);
-            if (assertStmt.AssertExpr.NodeType != NodeTypes.BoolType)
-                throw new Exception("Wrong type");
+            Expression assert = assertStmt.AssertExpr;
+            assert.Accept(this);
+            if (assert.NodeType != NodeTypes.BoolType)
+            {
+                Errors.AddError(String.Format("Assertion expression type {0} illegal at line {1} column {2}.",
+                    assert.NodeType, assertStmt.Line, assertStmt.Column), ErrorTypes.SemanticError);
+            }
         }
 
         public override void Visit(ForStmt forStmt)
         {
-            forStmt.StartExpr.Accept(this);
-            forStmt.EndExpr.Accept(this);
-            forStmt.LoopVar.Accept(this);
-            if (forStmt.LoopVar.NodeType != NodeTypes.IntType
-                || forStmt.StartExpr.NodeType != NodeTypes.IntType
-                || forStmt.EndExpr.NodeType != NodeTypes.IntType)
-                throw new Exception("Wrong type");
+            Expression start = forStmt.StartExpr;
+            Expression end = forStmt.EndExpr;
+            IdentifierExpr loopvar = forStmt.LoopVar;
+            start.Accept(this);
+            end.Accept(this);
+            loopvar.Accept(this);
+            if (loopvar.NodeType != NodeTypes.IntType)
+            {
+                Errors.AddError(String.Format("For loop variable {0} of type {0} illegal at line {1} column {2}.",
+                    loopvar.IdentifierName, loopvar.NodeType, loopvar.Line, loopvar.Column), ErrorTypes.SemanticError);
+            }
+            if (start.NodeType != NodeTypes.IntType || end.NodeType != NodeTypes.IntType)
+            {
+                Errors.AddError(String.Format("For loop expressions must be of type int at line {0} column {1}.",
+                    forStmt.Line, forStmt.Column), ErrorTypes.SemanticError);
+            }
             forStmt.Body.Accept(this);
         }
 
@@ -297,7 +331,16 @@ namespace Lexer
 
         public override void Visit(IdentifierExpr identifierNode)
         {
-            identifierNode.NodeType = SymbolTable.GetSymbolType(identifierNode.IdentifierName);
+            NodeTypes? idType = SymbolTable.GetSymbolType(identifierNode.IdentifierName);
+            if (idType.HasValue)
+            {
+                identifierNode.NodeType = idType.Value;
+            }
+            else
+            {
+                Errors.AddError(String.Format("Undeclared variable {0} at line {1} column {2}.",
+                    identifierNode.IdentifierName, identifierNode.Line, identifierNode.Column), ErrorTypes.SemanticError);
+            }
         }
     }
 }

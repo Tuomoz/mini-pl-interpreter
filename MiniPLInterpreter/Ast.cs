@@ -11,7 +11,7 @@ namespace Lexer
 
     abstract class AstNode
     {
-        int Line, Column;
+        public readonly int Line, Column;
 
         public AstNode(int line, int column)
         {

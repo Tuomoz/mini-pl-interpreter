@@ -2,7 +2,7 @@
 
 namespace Interpreter
 {
-    public enum ErrorTypes { LexicalError, SyntaxError };
+    public enum ErrorTypes { LexicalError, SyntaxError, SemanticError };
 
     public class ErrorHandler
     {
