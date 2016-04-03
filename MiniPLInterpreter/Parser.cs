@@ -184,30 +184,31 @@ namespace Frontend
 
         private Expression ParseExpression()
         {
+            Expression expr;
             if (Accept(Token.Types.OpNot))
             {
                 UnaryExpr unary = new UnaryExpr(AcceptedToken.Line, AcceptedToken.Column);
                 unary.Op = Operator.Not;
                 unary.Expr = ParseFactor();
-                return unary;
+                expr = unary;
             }
             else
             {
-                Expression exp = ParseTerm();
-                BinaryExpr tail = ParseTermTail(exp);
+                expr = ParseTerm();
+                BinaryExpr tail = ParseTermTail(expr);
                 if (tail != null)
                 {
-                    exp = tail;
+                    expr = tail;
                 }
-                BinaryExpr logical = ParseLogical(exp);
-                if (logical != null)
-                {
-                    return logical;
-                }
-                else
-                {
-                    return exp;
-                }
+            }
+            BinaryExpr logical = ParseLogical(expr);
+            if (logical != null)
+            {
+                return logical;
+            }
+            else
+            {
+                return expr;
             }
         }
 
