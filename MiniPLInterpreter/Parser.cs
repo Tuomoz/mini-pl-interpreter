@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Interpreter;
+using System;
 
 namespace Lexer
 {
@@ -7,10 +8,12 @@ namespace Lexer
         private Scanner Scanner;
         private Token CurrentToken;
         private Token AcceptedToken;
+        private ErrorHandler Errors;
 
-        public Parser(Scanner scanner)
+        public Parser(Scanner scanner, ErrorHandler errors)
         {
             Scanner = scanner;
+            Errors = errors;
             CurrentToken = Scanner.GetNextToken();
         }
 
@@ -70,7 +73,10 @@ namespace Lexer
         {
             if (CurrentToken.Type != excepted)
             {
-                throw new System.FormatException(CurrentToken.Type.ToString());
+                if (excepted == Token.Types.LineTerm)
+                    return new Token(Token.Types.LineTerm, CurrentToken.Line, CurrentToken.Column);
+                throw new ParserException(String.Format("Expected {0}, got {1} instead at line {2} column {3}.",
+                    excepted, CurrentToken.Type, CurrentToken.Line, CurrentToken.Column));
             }
             Token match = CurrentToken;
             NextToken();
@@ -80,22 +86,36 @@ namespace Lexer
         private StmtList ParseProgram()
         {
             StmtList statements = new StmtList(CurrentToken.Line, CurrentToken.Column);
-            Statement stm = ParseStatement();
-            statements.AddStatement(stm);
-            Match(Token.Types.LineTerm);
             ParseStatements(statements);
             return statements;
         }
 
         private StmtList ParseStatements(StmtList statements)
         {
-            if (CurrentToken == null || CurrentToken.Type == Token.Types.KwEnd)
+            if (CurrentToken.Type == Token.Types.EOF || CurrentToken.Type == Token.Types.KwEnd)
             {
                 return statements;
             }
-            statements.AddStatement(ParseStatement());
-            Match(Token.Types.LineTerm);
+            try
+            {
+                statements.AddStatement(ParseStatement());
+                Match(Token.Types.LineTerm);
+            }
+            catch (ParserException e)
+            {
+                Errors.AddError(e.Message, ErrorTypes.SyntaxError);
+                SkipToNextStatement();
+            }
             return ParseStatements(statements);
+        }
+
+        private void SkipToNextStatement()
+        {
+            while (CurrentToken.Type != Token.Types.LineTerm && CurrentToken.Type != Token.Types.EOF)
+            {
+                NextToken();
+            }
+            NextToken();
         }
 
         private Statement ParseStatement()
@@ -158,7 +178,8 @@ namespace Lexer
                 Match(Token.Types.RParen);
                 return statement;
             }
-            throw new System.Exception();
+            throw new ParserException(String.Format("Expected statement, got {0} instead at line {1} column {2}.",
+                CurrentToken.Type, CurrentToken.Line, CurrentToken.Column));
         }
 
         private Expression ParseExpression()
@@ -230,7 +251,8 @@ namespace Lexer
                 Match(Token.Types.RParen);
                 return exp;
             }
-            else throw new System.Exception();
+            else throw new ParserException(String.Format("Expected literal or identifier, got {0} instead at line {1} column {2}.", 
+                CurrentToken.Type, CurrentToken.Line, CurrentToken.Column));
         }
 
         private BinaryExpr ParseTermTail(Expression leftExp)
@@ -302,7 +324,15 @@ namespace Lexer
                 return new TypeNode(CurrentToken.Line, CurrentToken.Column, NodeTypes.BoolType);
             }
             else
-                throw new System.Exception();
+            {
+                throw new ParserException(String.Format("Unknown type \"{0}\" at line {1} column {2}.",
+                    CurrentToken.Content, CurrentToken.Line, CurrentToken.Column));
+            }
         }
+    }
+
+    class ParserException : Exception
+    {
+        public ParserException(string message) : base(message) { }
     }
 }

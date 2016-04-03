@@ -65,7 +65,7 @@ namespace Lexer
             SkipComments();
             SkipWhitespace();
             if (!Source.CurrentChar.HasValue)
-                return null;
+                return new Token(Token.Types.EOF, Source.CurrentLine, Source.CurrentColumn);
 
             int newTokenLine = Source.CurrentLine, newTokenColumn = Source.CurrentColumn;
 
@@ -106,7 +106,7 @@ namespace Lexer
                 ErrorHandler.AddError(
                     string.Format("Unknown token '{0}' at line {1} column {2}",
                     Source.CurrentChar, Source.CurrentLine, Source.CurrentColumn),
-                    ErrorTypes.LexerError);
+                    ErrorTypes.LexicalError);
                 return GetNextToken();
             }
         }
@@ -128,7 +128,7 @@ namespace Lexer
                         ErrorHandler.AddError(
                             string.Format("Unrecognized escape sequence '\\{0}' at line {1} column {2}",
                             Source.CurrentChar, Source.CurrentLine, Source.CurrentColumn),
-                            ErrorTypes.LexerError);
+                            ErrorTypes.LexicalError);
                     }
                 }
                 else
@@ -145,7 +145,7 @@ namespace Lexer
                 ErrorHandler.AddError(
                     string.Format("EOL while scanning string literal at line {0} column {1}",
                     Source.CurrentLine, Source.CurrentColumn),
-                    ErrorTypes.LexerError);
+                    ErrorTypes.LexicalError);
             }
             return TokenContentBuilder.ToString();
         }
@@ -191,7 +191,7 @@ namespace Lexer
                         ErrorHandler.AddError(
                             string.Format("EOF while scanning comment beginning at line {0} column {1}",
                             commentBeginLine, commentBeginColumn),
-                            ErrorTypes.LexerError);
+                            ErrorTypes.LexicalError);
                     }
                 }
                 SkipWhitespace();
@@ -310,7 +310,7 @@ namespace Lexer
     {
         public enum Types { Identifier, IntLiteral, LParen, RParen, OpPlus, OpMinus, KwVar, KwInt,
             KwString, OpAssignment, OpRange, StringLiteral, KwFor, KwEnd, KwIn, KwDo, KwRead, KwPrint,
-            KwBool, KwAssert, OpMultiply, OpDivide, OpLess, OpEquals, OpAnd, OpNot, LineTerm, Colon
+            KwBool, KwAssert, OpMultiply, OpDivide, OpLess, OpEquals, OpAnd, OpNot, LineTerm, Colon, EOF
         };
 
         public Types Type { get; }
