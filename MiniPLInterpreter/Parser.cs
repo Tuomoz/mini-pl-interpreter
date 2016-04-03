@@ -1,7 +1,7 @@
 ﻿using Interpreter;
 using System;
 
-namespace Lexer
+namespace Frontend
 {
     class Parser
     {
@@ -313,15 +313,15 @@ namespace Lexer
         {
             if (Accept(Token.Types.KwInt))
             {
-                return new TypeNode(CurrentToken.Line, CurrentToken.Column, NodeTypes.IntType);
+                return new TypeNode(CurrentToken.Line, CurrentToken.Column, ExprType.IntType);
             }
             else if (Accept(Token.Types.KwString))
             {
-                return new TypeNode(CurrentToken.Line, CurrentToken.Column, NodeTypes.StringType);
+                return new TypeNode(CurrentToken.Line, CurrentToken.Column, ExprType.StringType);
             }
             else if (Accept(Token.Types.KwBool))
             {
-                return new TypeNode(CurrentToken.Line, CurrentToken.Column, NodeTypes.BoolType);
+                return new TypeNode(CurrentToken.Line, CurrentToken.Column, ExprType.BoolType);
             }
             else
             {

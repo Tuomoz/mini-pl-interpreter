@@ -1,9 +1,9 @@
-﻿using Lexer;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Frontend;
 
 namespace Interpreter
 {
@@ -13,11 +13,19 @@ namespace Interpreter
     class ExecutorVisitor : DefaultVisitor
     {
         private SymbolTable SymbolTable;
-        private ExpressionEvaluator Evaluator = new ExpressionEvaluator();
+        private ExpressionEvaluator Evaluator;
+        private StmtList RootStmtList;
 
-        public ExecutorVisitor(SymbolTable symbolTable)
+        public ExecutorVisitor(SymbolTable symbolTable, StmtList statements)
         {
             SymbolTable = symbolTable;
+            Evaluator = new ExpressionEvaluator();
+            RootStmtList = statements;
+        }
+
+        public void Execute()
+        {
+            RootStmtList.Accept(this);
         }
 
         public override void Visit(StmtList stmtList)
@@ -94,9 +102,9 @@ namespace Interpreter
             Symbol inputSymbol = SymbolTable.GetSymbol(readStmt.Variable.IdentifierName);
             switch (readStmt.Variable.NodeType)
             {
-                case NodeTypes.IntType: inputSymbol.Value = int.Parse(userInput); break;
-                case NodeTypes.StringType: inputSymbol.Value = userInput; break;
-                case NodeTypes.BoolType:
+                case ExprType.IntType: inputSymbol.Value = int.Parse(userInput); break;
+                case ExprType.StringType: inputSymbol.Value = userInput; break;
+                case ExprType.BoolType:
                     userInput = userInput.ToLower();
                     if (userInput == "false" || userInput == "0")
                         inputSymbol.Value = false;
@@ -119,8 +127,8 @@ namespace Interpreter
         private Dictionary<Operator, BinEvaluatorFunc> BinaryStringEvaluators;
         private Dictionary<Operator, BinEvaluatorFunc> BinaryBoolEvaluators;
         private Dictionary<Operator, UnaryEvaluatorFunc> UnaryBoolEvaluators;
-        private Dictionary<NodeTypes, Dictionary<Operator, BinEvaluatorFunc>> BinaryExprEvaluators;
-        private Dictionary<NodeTypes, Dictionary<Operator, UnaryEvaluatorFunc>> UnaryExprEvaluators;
+        private Dictionary<ExprType, Dictionary<Operator, BinEvaluatorFunc>> BinaryExprEvaluators;
+        private Dictionary<ExprType, Dictionary<Operator, UnaryEvaluatorFunc>> UnaryExprEvaluators;
 
         public ExpressionEvaluator()
         {
@@ -145,19 +153,19 @@ namespace Interpreter
                 { Operator.And, (var1, var2) => (bool)var1 && (bool)var2 },
                 { Operator.Less, (var1, var2) => !(bool)var1 && (bool)var2 }
             };
-            BinaryExprEvaluators = new Dictionary<NodeTypes, Dictionary<Operator, BinEvaluatorFunc>>()
+            BinaryExprEvaluators = new Dictionary<ExprType, Dictionary<Operator, BinEvaluatorFunc>>()
             {
-                { NodeTypes.IntType, BinaryIntEvaluators },
-                { NodeTypes.StringType, BinaryStringEvaluators },
-                { NodeTypes.BoolType, BinaryBoolEvaluators }
+                { ExprType.IntType, BinaryIntEvaluators },
+                { ExprType.StringType, BinaryStringEvaluators },
+                { ExprType.BoolType, BinaryBoolEvaluators }
             };
             UnaryBoolEvaluators = new Dictionary<Operator, UnaryEvaluatorFunc>()
             {
                 { Operator.Not, var => !(bool)var }
             };
-            UnaryExprEvaluators = new Dictionary<NodeTypes, Dictionary<Operator, UnaryEvaluatorFunc>>
+            UnaryExprEvaluators = new Dictionary<ExprType, Dictionary<Operator, UnaryEvaluatorFunc>>
             {
-                { NodeTypes.BoolType, UnaryBoolEvaluators }
+                { ExprType.BoolType, UnaryBoolEvaluators }
             };
         }
         public object EvaluateExpression(Expression expression1, Expression expression2, Operator op)

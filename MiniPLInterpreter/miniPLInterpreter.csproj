@@ -44,15 +44,17 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Ast.cs" />
-    <Compile Include="AstVisitor.cs" />
+    <Compile Include="Visitors\AstPrinterVisitor.cs" />
+    <Compile Include="Visitors\AstVisitor.cs" />
     <Compile Include="ErrorHandler.cs" />
-    <Compile Include="ExecutorVisitor.cs" />
+    <Compile Include="Visitors\ExecutorVisitor.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="Scanner.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SymbolTable.cs" />
     <Compile Include="TypeChecker.cs" />
+    <Compile Include="Visitors\TypeCheckerVisitor.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

@@ -5,49 +5,49 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Lexer
+namespace Frontend
 {
     class TypeChecker
     {
         private ErrorHandler Errors;
-        private Dictionary<Operator, NodeTypes> intTypeBindings;
-        private Dictionary<Operator, NodeTypes> boolTypeBindings;
-        private Dictionary<Operator, NodeTypes> stringTypeBindings;
-        private Dictionary<NodeTypes, Dictionary<Operator, NodeTypes>> typeBindings;
+        private Dictionary<Operator, ExprType> intTypeBindings;
+        private Dictionary<Operator, ExprType> boolTypeBindings;
+        private Dictionary<Operator, ExprType> stringTypeBindings;
+        private Dictionary<ExprType, Dictionary<Operator, ExprType>> typeBindings;
 
         public TypeChecker(ErrorHandler errors)
         {
             Errors = errors;
-            intTypeBindings = new Dictionary<Operator, NodeTypes>()
+            intTypeBindings = new Dictionary<Operator, ExprType>()
             {
-                { Operator.Plus, NodeTypes.IntType },
-                { Operator.Minus, NodeTypes.IntType },
-                { Operator.Divide, NodeTypes.IntType },
-                { Operator.Times, NodeTypes.IntType },
-                { Operator.Equals, NodeTypes.BoolType },
-                { Operator.Less, NodeTypes.BoolType }
+                { Operator.Plus, ExprType.IntType },
+                { Operator.Minus, ExprType.IntType },
+                { Operator.Divide, ExprType.IntType },
+                { Operator.Times, ExprType.IntType },
+                { Operator.Equals, ExprType.BoolType },
+                { Operator.Less, ExprType.BoolType }
             };
-            boolTypeBindings = new Dictionary<Operator, NodeTypes>()
+            boolTypeBindings = new Dictionary<Operator, ExprType>()
             {
-                { Operator.Equals, NodeTypes.BoolType },
-                { Operator.And, NodeTypes.BoolType },
-                { Operator.Not, NodeTypes.BoolType },
-                { Operator.Less, NodeTypes.BoolType }
+                { Operator.Equals, ExprType.BoolType },
+                { Operator.And, ExprType.BoolType },
+                { Operator.Not, ExprType.BoolType },
+                { Operator.Less, ExprType.BoolType }
             };
-            stringTypeBindings = new Dictionary<Operator, NodeTypes>()
+            stringTypeBindings = new Dictionary<Operator, ExprType>()
             {
-                { Operator.Plus, NodeTypes.StringType },
-                { Operator.Equals, NodeTypes.BoolType },
-                { Operator.Less, NodeTypes.BoolType }
+                { Operator.Plus, ExprType.StringType },
+                { Operator.Equals, ExprType.BoolType },
+                { Operator.Less, ExprType.BoolType }
             };
-            typeBindings = new Dictionary<NodeTypes, Dictionary<Operator, NodeTypes>>()
+            typeBindings = new Dictionary<ExprType, Dictionary<Operator, ExprType>>()
             {
-                { NodeTypes.IntType, intTypeBindings },
-                { NodeTypes.BoolType, boolTypeBindings },
-                { NodeTypes.StringType, stringTypeBindings }
+                { ExprType.IntType, intTypeBindings },
+                { ExprType.BoolType, boolTypeBindings },
+                { ExprType.StringType, stringTypeBindings }
             };
         }
-        public NodeTypes TypeCheck(Expression expr1, Expression expr2, Operator op)
+        public ExprType TypeCheck(Expression expr1, Expression expr2, Operator op)
         {
             var opBindings = typeBindings[expr1.NodeType];
             if (opBindings.ContainsKey(op) && expr1.NodeType == expr2.NodeType)
@@ -58,12 +58,12 @@ namespace Lexer
             {
                 Errors.AddError(String.Format("Can't apply operator {0} on types {1} and {2} at line {3} column {4}.",
                     op, expr1.NodeType, expr2.NodeType, expr1.Line, expr1.Column), ErrorTypes.SemanticError);
-                return NodeTypes.VoidType;
+                return ExprType.VoidType;
             }
             
         }
 
-        internal NodeTypes TypeCheck(Expression expr, Operator op)
+        internal ExprType TypeCheck(Expression expr, Operator op)
         {
             var opBindings = typeBindings[expr.NodeType];
             if (opBindings.ContainsKey(op))
@@ -74,7 +74,7 @@ namespace Lexer
             {
                 Errors.AddError(String.Format("Can't apply operator {0} on type {1} at line {2} column {3}.",
                     op, expr.NodeType, expr.Line, expr.Column), ErrorTypes.SemanticError);
-                return NodeTypes.VoidType;
+                return ExprType.VoidType;
             }
         }
     }

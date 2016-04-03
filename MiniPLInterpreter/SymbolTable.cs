@@ -4,13 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Lexer
+namespace Frontend
 {
     public class SymbolTable
     {
         private Dictionary<string, Symbol> SymbolDic = new Dictionary<string, Symbol>();
 
-        public bool AddSymbol(string name, NodeTypes type, dynamic value = null)
+        public bool AddSymbol(string name, ExprType type, dynamic value = null)
         {
             if (SymbolDic.ContainsKey(name))
             {
@@ -20,7 +20,7 @@ namespace Lexer
             return true;
         }
 
-        public NodeTypes? GetSymbolType(string name)
+        public ExprType? GetSymbolType(string name)
         {
             if (SymbolDic.ContainsKey(name))
                 return SymbolDic[name].Type;
@@ -55,10 +55,10 @@ namespace Lexer
     public class Symbol
     {
         public readonly string Name;
-        public readonly Lexer.NodeTypes Type;
+        public readonly ExprType Type;
         public object Value { get; set; }
 
-        public Symbol(string name, NodeTypes type, object value = null)
+        public Symbol(string name, ExprType type, object value = null)
         {
             Name = name;
             Type = type;

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Lexer
+namespace Frontend
 {
     public class Scanner
     {

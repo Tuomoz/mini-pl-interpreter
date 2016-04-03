@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Lexer
+namespace Frontend
 {
-    public enum NodeTypes { IntType, StringType, BoolType, VoidType };
+    public enum ExprType { IntType, StringType, BoolType, VoidType };
     public enum Operator { Plus, Minus, Times, Divide, Less, Equals, And, Not }
 
     abstract class AstNode
@@ -29,7 +29,7 @@ namespace Lexer
 
     abstract class Expression : AstNode
     {
-        public NodeTypes NodeType { get; set; } = NodeTypes.VoidType;
+        public ExprType NodeType { get; set; } = ExprType.VoidType;
         public object ExprValue;
 
         public Expression(int line, int column) : base(line, column) { }
@@ -86,9 +86,9 @@ namespace Lexer
 
     class TypeNode : AstNode
     {
-        public NodeTypes Type;
+        public ExprType Type;
 
-        public TypeNode(int line, int column, NodeTypes type) : base (line, column)
+        public TypeNode(int line, int column, ExprType type) : base (line, column)
         {
             Type = type;
         }
@@ -197,7 +197,7 @@ namespace Lexer
         public override void Accept(IAstVisitor visitor)
         {
             visitor.Visit(this);
-            NodeType = NodeTypes.IntType;
+            NodeType = ExprType.IntType;
         }
     }
 
@@ -208,7 +208,7 @@ namespace Lexer
         public override void Accept(IAstVisitor visitor)
         {
             visitor.Visit(this);
-            NodeType = NodeTypes.StringType;
+            NodeType = ExprType.StringType;
         }
     }
 }

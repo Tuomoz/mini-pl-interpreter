@@ -1,5 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Lexer;
+using Frontend;
 using Interpreter;
 
 namespace UnitTests
