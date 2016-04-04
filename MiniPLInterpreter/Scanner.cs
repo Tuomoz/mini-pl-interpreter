@@ -316,10 +316,10 @@ namespace Frontend
             KwBool, KwAssert, OpMultiply, OpDivide, OpLess, OpEquals, OpAnd, OpNot, LineTerm, Colon, EOF
         };
 
-        public Types Type { get; }
-        public string Content { get; }
-        public int Column { get; }
-        public int Line { get; }
+		public readonly Types Type;
+		public readonly string Content;
+		public readonly int Column;
+		public readonly int Line;
 
         public Token(Types type, int line, int column)
         {
