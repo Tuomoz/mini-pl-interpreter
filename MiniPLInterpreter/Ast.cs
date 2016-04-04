@@ -29,10 +29,13 @@ namespace Frontend
 
     abstract class Expression : AstNode
     {
-        public ExprType Type { get; set; } = ExprType.VoidType;
+        public ExprType Type { get; set; }
         public object ExprValue;
 
-        public Expression(int line, int column) : base(line, column) { }
+        public Expression(int line, int column) : base(line, column) 
+		{
+			Type = ExprType.VoidType;
+		}
     }
 
     class StmtList : AstNode

@@ -220,8 +220,8 @@ namespace Frontend
         private Queue<BufferedChar> CharBuffer = new Queue<BufferedChar>();
 
         public char? CurrentChar { get; private set; }
-        public int CurrentColumn { get; private set; } = 0;
-        public int CurrentLine { get; private set; } = 0;
+        public int CurrentColumn { get; private set; }
+        public int CurrentLine { get; private set; }
 
         public string CurrentAndPeek
         {
@@ -230,6 +230,8 @@ namespace Frontend
 
         public SourceReader(System.IO.TextReader sourceStream)
         {
+			CurrentColumn = 0;
+			CurrentLine = 0;
             SourceStream = sourceStream;
         }
 
